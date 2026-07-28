@@ -1,0 +1,937 @@
+/*
+ * Spellbook Chat — scoped panel.
+ *
+ * Every `--grim-*` reference below carries a `var(NAME, fallback)` default,
+ * NOT a competing `:root` block. `--grim-*` is Grimoire's own real,
+ * hand-authored theme namespace (see tome/site/src/css/custom.css) —
+ * defining a second, generic version of the same names at `:root` would
+ * win or lose against the real theme depending on stylesheet load order,
+ * silently reskinning the whole site. Per-usage fallbacks have no such
+ * risk: if `--grim-*` is genuinely defined somewhere in the cascade (as on
+ * Grimoire's own site), that value wins outright; only when it is
+ * undefined anywhere (every other generated project, whose agent picked
+ * its own `--<scope>-*` name) does the fallback — derived from Infima's
+ * universal tokens — apply.
+ */
+
+.launcher {
+  position: fixed;
+  right: var(--spellbook-launcher-inset, var(--grim-space-lg, 1.5rem));
+  bottom: var(--spellbook-launcher-inset, var(--grim-space-lg, 1.5rem));
+  z-index: calc(var(--ifm-z-index-fixed, 200) + 20);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--grim-space-2xs, 0.25rem);
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--grim-font-ui, var(--ifm-font-family-base));
+  color: var(--spellbook-launcher-color, var(--grim-text-muted, var(--ifm-color-emphasis-700)));
+  transition: color var(--grim-dur-med, 220ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.launcher:hover,
+.launcher:focus-visible {
+  color: var(--spellbook-launcher-color-active, var(--grim-violet, var(--ifm-color-primary)));
+}
+
+.launcher:focus-visible {
+  outline: 2px solid var(--spellbook-launcher-color-active, var(--grim-violet, var(--ifm-color-primary)));
+  outline-offset: 3px;
+  border-radius: var(--grim-radius-lg, 16px);
+}
+
+.launcherSigil {
+  position: relative;
+  width: var(--spellbook-launcher-size, 3.25rem);
+  height: var(--spellbook-launcher-size, 3.25rem);
+  border-radius: 50%;
+  background: radial-gradient(
+      circle at 35% 30%,
+      oklch(0.88 0.08 300 / 0.55),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      var(--spellbook-launcher-bg, var(--grim-surface-2, var(--ifm-color-emphasis-100))),
+      var(--grim-bg-deep, var(--ifm-background-surface-color))
+    );
+  box-shadow: var(--spellbook-launcher-shadow, var(--grim-glow-violet, 0 0 24px color-mix(in oklch, var(--ifm-color-primary) 45%, transparent)));
+  border: var(--spellbook-launcher-border, 1px solid var(--grim-rule-strong, var(--ifm-color-emphasis-400)));
+  display: grid;
+  place-items: center;
+  animation: sigilPulse 2.6s var(--grim-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1)) infinite;
+}
+
+.launcherSigilInner {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  border: 2px solid var(--spellbook-launcher-color-active, var(--grim-violet, var(--ifm-color-primary)));
+  box-shadow: inset 0 0 12px oklch(0.72 0.2 300 / 0.45);
+  opacity: 0.95;
+}
+
+.launcherLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  max-width: 6.5rem;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: oklch(0.06 0.02 280 / 0.55);
+  z-index: calc(var(--ifm-z-index-fixed, 200) + 15);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--grim-dur-med, 220ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.backdropVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(420px, 100vw);
+  z-index: calc(var(--ifm-z-index-fixed, 200) + 25);
+  background: var(--grim-bg-deep, var(--ifm-background-surface-color));
+  border-left: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  box-shadow: -20px 0 48px oklch(0.05 0.02 280 / 0.55);
+  transform: translateX(102%);
+  transition: transform var(--grim-dur-slow, 360ms) var(--grim-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    width var(--grim-dur-med, 220ms) var(--grim-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1));
+  display: flex;
+  flex-direction: column;
+  font-family: var(--grim-font-ui, var(--ifm-font-family-base));
+}
+
+.panelOpen {
+  transform: translateX(0);
+}
+
+.panelExpanded {
+  width: min(960px, 96vw);
+  box-shadow: -32px 0 80px oklch(0.04 0.02 280 / 0.7);
+}
+
+.panelInner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--grim-space-sm, 0.75rem);
+  padding: var(--grim-space-md, 1rem);
+  padding-top: var(--grim-space-lg, 1.5rem);
+  border-bottom: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: linear-gradient(
+    180deg,
+    oklch(0.16 0.03 282 / 0.95),
+    var(--grim-bg-deep, var(--ifm-background-surface-color))
+  );
+}
+
+.headerMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.kicker {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  font-family: var(--grim-font-sc, var(--ifm-font-family-base));
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.65rem;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+}
+
+.kickerNum {
+  color: var(--grim-gold, var(--ifm-color-primary-light));
+  font-weight: 600;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--grim-space-sm, 0.75rem);
+  margin-top: var(--grim-space-xs, 0.5rem);
+}
+
+.title {
+  font-family: var(--grim-font-display, var(--ifm-font-family-base));
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--grim-text, var(--ifm-font-color-base));
+  margin: 0;
+}
+
+.repo {
+  margin: var(--grim-space-xs, 0.5rem) 0 0;
+  font-size: 0.78rem;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.iconButton {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: var(--grim-radius-sm, 6px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-surface, var(--ifm-background-surface-color));
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    background var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.iconButton:hover:not(:disabled) {
+  color: var(--grim-gold, var(--ifm-color-primary-light));
+  border-color: var(--grim-rule-strong, var(--ifm-color-emphasis-400));
+  background: var(--grim-surface-2, var(--ifm-color-emphasis-100));
+}
+
+.iconButton:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.iconButton[aria-pressed="true"] {
+  color: var(--grim-gold, var(--ifm-color-primary-light));
+  background: oklch(0.22 0.05 285);
+  border-color: oklch(0.55 0.18 78 / 0.55);
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--grim-violet, var(--ifm-color-primary));
+  outline-offset: 2px;
+}
+
+.closeButton {
+  composes: iconButton;
+}
+
+.settingsButton {
+  composes: iconButton;
+}
+
+.statusBar {
+  padding: var(--grim-space-sm, 0.75rem) var(--grim-space-md, 1rem);
+  border-bottom: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-surface, var(--ifm-background-surface-color));
+}
+
+.statusText {
+  font-size: 0.78rem;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  margin: 0 0 var(--grim-space-xs, 0.5rem);
+}
+
+.progressTrack {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--grim-surface-3, var(--ifm-color-emphasis-200));
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--grim-violet-deep, var(--ifm-color-primary-darker)), var(--grim-violet, var(--ifm-color-primary)));
+  border-radius: inherit;
+  transition: width var(--grim-dur-med, 220ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.progressFillIndeterminate {
+  height: 100%;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--grim-violet-deep, var(--ifm-color-primary-darker)),
+    var(--grim-violet, var(--ifm-color-primary)),
+    var(--grim-cyan-deep, var(--ifm-color-primary-dark))
+  );
+  animation: progressSweep 1.35s var(--grim-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1)) infinite;
+}
+
+@keyframes progressSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+.errorBanner {
+  margin: var(--grim-space-md, 1rem);
+  padding: var(--grim-space-sm, 0.75rem) var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-md, 10px);
+  border: 1px solid oklch(0.55 0.18 25 / 0.45);
+  background: oklch(0.22 0.05 25 / 0.45);
+  color: oklch(0.92 0.04 25);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.errorActions {
+  margin-top: var(--grim-space-sm, 0.75rem);
+  display: flex;
+  gap: var(--grim-space-sm, 0.75rem);
+}
+
+.messages {
+  flex: 1;
+  overflow: auto;
+  padding: var(--grim-space-md, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--grim-space-md, 1rem);
+  scroll-behavior: smooth;
+}
+
+.panelExpanded .messages {
+  padding: var(--grim-space-lg, 1.5rem) var(--grim-space-xl, 2rem);
+}
+
+.panelExpanded .bubble {
+  max-width: 78%;
+  font-size: 0.95rem;
+}
+
+.panelExpanded .bubbleRow {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 780px;
+}
+
+.panelExpanded .footer {
+  padding: var(--grim-space-md, 1rem) var(--grim-space-xl, 2rem);
+}
+
+.panelExpanded .composer {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 780px;
+}
+
+.bubbleRow {
+  display: flex;
+}
+
+.bubbleRowUser {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 92%;
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--grim-radius-lg, 16px);
+  font-family: var(--grim-font-chat, var(--ifm-font-family-base));
+  font-size: 0.92rem;
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--grim-text, var(--ifm-font-color-base));
+  font-feature-settings: "ss01", "cv11";
+}
+
+.bubbleUser {
+  background: linear-gradient(
+    135deg,
+    oklch(0.28 0.06 300 / 0.9),
+    var(--grim-surface-2, var(--ifm-color-emphasis-100))
+  );
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  white-space: pre-wrap;
+}
+
+.bubbleAssistant {
+  background: var(--grim-surface, var(--ifm-background-surface-color));
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+}
+
+.bubbleAssistantError {
+  border-color: oklch(0.55 0.18 25 / 0.55);
+  background: oklch(0.22 0.05 25 / 0.4);
+}
+
+.typingDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0;
+}
+
+.typingDots > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+  animation: typingPulse 1.1s var(--grim-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1)) infinite;
+}
+
+.typingDots > span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.typingDots > span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes typingPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.bubbleMeta {
+  margin-top: var(--grim-space-xs, 0.5rem);
+  font-size: 0.72rem;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+  font-family: var(--grim-font-mono, var(--ifm-font-family-monospace));
+}
+
+.truncatedNotice {
+  margin: var(--grim-space-sm, 0.75rem) 0 0;
+  padding: var(--grim-space-xs, 0.5rem) var(--grim-space-sm, 0.75rem);
+  border-radius: var(--grim-radius-sm, 6px);
+  background: oklch(0.32 0.07 80 / 0.32);
+  border: 1px solid oklch(0.55 0.12 80 / 0.45);
+  color: var(--grim-text, var(--ifm-font-color-base));
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.citations {
+  margin-top: var(--grim-space-md, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--grim-space-xs, 0.5rem);
+}
+
+.citationsTitle {
+  font-size: 0.68rem;
+  font-family: var(--grim-font-sc, var(--ifm-font-family-base));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+  margin: 0 0 var(--grim-space-2xs, 0.25rem);
+}
+
+.citationCard {
+  display: block;
+  padding: var(--grim-space-sm, 0.75rem) var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-md, 10px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-bg, var(--ifm-background-color));
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.citationCard[href]:hover {
+  border-color: var(--grim-violet, var(--ifm-color-primary));
+  box-shadow: var(--grim-glow-violet, 0 0 24px color-mix(in oklch, var(--ifm-color-primary) 45%, transparent));
+}
+
+.citationPath {
+  font-family: var(--grim-font-mono, var(--ifm-font-family-monospace));
+  font-size: 0.78rem;
+  color: var(--grim-gold, var(--ifm-color-primary-light));
+  word-break: break-all;
+}
+
+.citationHeadings {
+  margin: var(--grim-space-2xs, 0.25rem) 0 0;
+  font-size: 0.76rem;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+}
+
+.footer {
+  padding: var(--grim-space-md, 1rem);
+  border-top: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: linear-gradient(0deg, var(--grim-bg-deep, var(--ifm-background-surface-color)), var(--grim-surface, var(--ifm-background-surface-color)));
+  display: flex;
+  flex-direction: column;
+  gap: var(--grim-space-sm, 0.75rem);
+}
+
+.voiceHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  text-align: center;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+  border-radius: var(--grim-radius-lg, 16px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-bg, var(--ifm-background-color));
+  transition: border-color var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.composer:has(.textarea:focus) {
+  border-color: var(--grim-violet, var(--ifm-color-primary));
+  box-shadow: 0 0 0 1px oklch(0.72 0.2 300 / 0.35);
+}
+
+.textarea {
+  flex: 1;
+  min-height: 2.5rem;
+  max-height: 8rem;
+  resize: none;
+  padding: 0.55rem 0;
+  border: none;
+  background: transparent;
+  color: var(--grim-text, var(--ifm-font-color-base));
+  font-family: var(--grim-font-ui, var(--ifm-font-family-base));
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.textarea:disabled {
+  opacity: 0.55;
+}
+
+.composerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.15rem;
+}
+
+.micButton {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-surface, var(--ifm-background-surface-color));
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    background var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.micButton:hover:not(:disabled) {
+  color: var(--grim-violet, var(--ifm-color-primary));
+  border-color: var(--grim-rule-strong, var(--ifm-color-emphasis-400));
+}
+
+.micButton:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.micButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.micButton:focus-visible {
+  outline: 2px solid var(--grim-violet, var(--ifm-color-primary));
+  outline-offset: 2px;
+}
+
+.micButtonListening {
+  border-color: oklch(0.62 0.2 25 / 0.65);
+  background: oklch(0.3 0.09 25 / 0.35);
+  color: oklch(0.75 0.16 25);
+  animation: micListeningPulse 1.4s ease-in-out infinite;
+}
+
+.micButtonBusy {
+  color: var(--grim-violet, var(--ifm-color-primary));
+  cursor: default;
+}
+
+.micButtonSpeaking {
+  border-color: var(--grim-violet, var(--ifm-color-primary));
+  color: var(--grim-violet, var(--ifm-color-primary));
+}
+
+.micSpinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  border-top-color: var(--grim-violet, var(--ifm-color-primary));
+  border-radius: 50%;
+  animation: micSpin 0.85s linear infinite;
+}
+
+.sendButton {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    var(--grim-gold-deep, var(--ifm-color-primary)),
+    oklch(0.68 0.16 78)
+  );
+  color: var(--grim-accent-contrast, var(--ifm-color-primary-contrast-foreground));
+  box-shadow: var(--grim-glow-gold, 0 0 20px color-mix(in oklch, var(--ifm-color-primary) 40%, transparent));
+  transition: transform var(--grim-dur-fast, 120ms) var(--grim-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    filter var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.sendButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.sendButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@keyframes micListeningPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.62 0.2 25 / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px oklch(0.62 0.2 25 / 0.14);
+  }
+}
+
+@keyframes micSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .micButtonListening {
+    animation: none;
+    box-shadow: 0 0 0 3px oklch(0.62 0.2 25 / 0.3);
+  }
+
+  .micSpinner {
+    animation: none;
+    opacity: 0.75;
+  }
+}
+
+.settingsInline {
+  padding: var(--grim-space-md, 1rem);
+}
+
+.settingsCard {
+  composes: settingsInline;
+  margin: var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-lg, 16px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-surface, var(--ifm-background-surface-color));
+}
+
+.settingsTitle {
+  font-family: var(--grim-font-display, var(--ifm-font-family-base));
+  font-size: 1.05rem;
+  margin: 0 0 var(--grim-space-sm, 0.75rem);
+  color: var(--grim-text, var(--ifm-font-color-base));
+}
+
+.settingsHelp {
+  margin: 0 0 var(--grim-space-md, 1rem);
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+}
+
+.settingsHelp em {
+  color: var(--grim-violet, var(--ifm-color-primary));
+  font-style: italic;
+}
+
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--grim-space-xs, 0.5rem);
+}
+
+.settingsLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+}
+
+.settingsSelect {
+  width: 100%;
+  padding: var(--grim-space-sm, 0.75rem) var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-md, 10px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-bg, var(--ifm-background-color));
+  color: var(--grim-text, var(--ifm-font-color-base));
+  font-family: var(--grim-font-ui, var(--ifm-font-family-base));
+  font-size: 0.82rem;
+}
+
+.providerTagline {
+  margin: 0 0 var(--grim-space-sm, 0.75rem);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+}
+
+.settingsFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--grim-space-2xs, 0.25rem);
+}
+
+.fieldHelp {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+}
+
+.preloadPanel {
+  margin: var(--grim-space-sm, 0.75rem) 0 var(--grim-space-md, 1rem);
+  padding: var(--grim-space-sm, 0.75rem) 0 0;
+  border-top: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+}
+
+.preloadText {
+  margin: 0 0 var(--grim-space-xs, 0.5rem);
+  font-size: 0.78rem;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+}
+
+.settingsInput {
+  width: 100%;
+  padding: var(--grim-space-sm, 0.75rem) var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-md, 10px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: var(--grim-bg, var(--ifm-background-color));
+  color: var(--grim-text, var(--ifm-font-color-base));
+  font-family: var(--grim-font-mono, var(--ifm-font-family-monospace));
+  font-size: 0.82rem;
+}
+
+.settingsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grim-space-sm, 0.75rem);
+  margin-top: var(--grim-space-sm, 0.75rem);
+}
+
+.buttonPrimary {
+  padding: var(--grim-space-xs, 0.5rem) var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-md, 10px);
+  border: none;
+  background: var(--grim-violet-deep, var(--ifm-color-primary-darker));
+  color: var(--grim-accent-contrast, var(--ifm-color-primary-contrast-foreground));
+  font-family: var(--grim-font-ui, var(--ifm-font-family-base));
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.buttonPrimary:hover {
+  filter: brightness(1.08);
+}
+
+.buttonGhost {
+  padding: var(--grim-space-xs, 0.5rem) var(--grim-space-md, 1rem);
+  border-radius: var(--grim-radius-md, 10px);
+  border: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+  background: transparent;
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  font-family: var(--grim-font-ui, var(--ifm-font-family-base));
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.buttonGhost:hover {
+  border-color: var(--grim-rule-strong, var(--ifm-color-emphasis-400));
+  color: var(--grim-text, var(--ifm-font-color-base));
+}
+
+.degraded {
+  padding: var(--grim-space-md, 1rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--grim-space-sm, 0.75rem);
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.degradedIcon {
+  font-size: 2rem;
+  line-height: 1;
+  filter: grayscale(0.2);
+}
+
+.screenReader {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes sigilPulse {
+  0%,
+  100% {
+    box-shadow: var(--grim-glow-violet, 0 0 24px color-mix(in oklch, var(--ifm-color-primary) 45%, transparent));
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 1px oklch(0.72 0.2 300 / 0.35),
+      0 10px 36px -10px oklch(0.72 0.2 300 / 0.65);
+    transform: scale(1.03);
+  }
+}
+
+/* =============================================================
+   LIGHT THEME OVERRIDES — hardcoded dark oklch() values above
+   don't respond to the theme switch; correct them here.
+   ============================================================= */
+
+/* Backdrop: warm parchment scrim instead of near-black */
+:global([data-theme="light"]) .backdrop {
+  background: oklch(0.55 0.015 72 / 0.22);
+}
+
+:global([data-theme="light"]) .panel {
+  box-shadow: -20px 0 48px oklch(0.55 0.05 68 / 0.12);
+}
+
+:global([data-theme="light"]) .panelExpanded {
+  box-shadow: -32px 0 80px oklch(0.55 0.05 68 / 0.15);
+}
+
+/* Header: amber-kissed parchment gradient instead of flat near-white */
+:global([data-theme="light"]) .header {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklch, var(--grim-gold, var(--ifm-color-primary-light)) 8%, oklch(0.968 0.012 80 / 0.98)),
+    var(--grim-bg-deep, var(--ifm-background-surface-color))
+  );
+  border-bottom-color: color-mix(in oklch, var(--grim-gold, var(--ifm-color-primary-light)) 35%, var(--grim-rule, var(--ifm-color-emphasis-300)));
+}
+
+/* Kicker label: warm amber-adjacent rather than cool gray */
+:global([data-theme="light"]) .kicker {
+  color: oklch(0.52 0.05 68);
+}
+
+/* User bubble — first stop was hardcoded dark violet */
+:global([data-theme="light"]) .bubbleUser {
+  background: linear-gradient(
+    135deg,
+    oklch(0.9 0.05 298 / 0.75),
+    var(--grim-surface-2, var(--ifm-color-emphasis-100))
+  );
+}
+
+/* Pressed icon button — hardcoded dark background */
+:global([data-theme="light"]) .iconButton[aria-pressed="true"] {
+  background: oklch(0.92 0.04 285);
+  border-color: oklch(0.5 0.22 298 / 0.4);
+  color: var(--grim-violet-deep, var(--ifm-color-primary-darker));
+}
+
+/* Listening mic button — hardcoded dark red tint + light text reads low-contrast on parchment */
+:global([data-theme="light"]) .micButtonListening {
+  border-color: oklch(0.55 0.2 25 / 0.55);
+  background: oklch(0.94 0.05 25 / 0.6);
+  color: oklch(0.5 0.2 25);
+}
+
+/* Footer: amber-tinted separator + grounded gradient */
+:global([data-theme="light"]) .footer {
+  background: linear-gradient(
+    0deg,
+    var(--grim-surface, var(--ifm-background-surface-color)),
+    color-mix(in oklch, var(--grim-gold, var(--ifm-color-primary-light)) 4%, var(--grim-bg-deep, var(--ifm-background-surface-color)))
+  );
+  border-top-color: color-mix(in oklch, var(--grim-gold, var(--ifm-color-primary-light)) 30%, var(--grim-rule, var(--ifm-color-emphasis-300)));
+}
+
+/* Truncated notice: amber wash instead of dark warm overlay */
+:global([data-theme="light"]) .truncatedNotice {
+  background: color-mix(in oklch, var(--grim-gold, var(--ifm-color-primary-light)) 10%, var(--grim-surface, var(--ifm-background-surface-color)));
+  border-color: color-mix(in oklch, var(--grim-gold, var(--ifm-color-primary-light)) 28%, var(--grim-rule, var(--ifm-color-emphasis-300)));
+}
+
+/* Error banner: light-appropriate warm red */
+:global([data-theme="light"]) .errorBanner {
+  background: oklch(0.97 0.015 25);
+  border-color: oklch(0.65 0.18 25 / 0.5);
+  color: oklch(0.36 0.18 25);
+}

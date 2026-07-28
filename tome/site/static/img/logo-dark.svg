@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Spring PetClinic">
+  <title>Spring PetClinic</title>
+  <!-- Paw print: 4 toes + main pad — dark mode palette -->
+  <ellipse fill="#2dd4bf" cx="17" cy="20" rx="6" ry="7"/>
+  <ellipse fill="#2dd4bf" cx="28" cy="14" rx="6" ry="7"/>
+  <ellipse fill="#2dd4bf" cx="40" cy="14" rx="6" ry="7"/>
+  <ellipse fill="#2dd4bf" cx="51" cy="20" rx="6" ry="7"/>
+  <!-- Main pad -->
+  <ellipse fill="#2dd4bf" cx="34" cy="42" rx="14" ry="12"/>
+  <!-- Veterinary cross mark -->
+  <rect fill="#fb923c" x="50" y="36" width="4" height="14" rx="2"/>
+  <rect fill="#fb923c" x="44" y="42" width="16" height="4" rx="2"/>
+</svg>

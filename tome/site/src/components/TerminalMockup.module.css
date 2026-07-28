@@ -1,0 +1,93 @@
+.frame {
+  background: var(--petclinic-color-surface-elevated);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  /* Single shadow only — avoids ghost-card (border + large shadow) anti-pattern */
+  box-shadow: 0 4px 8px rgba(13, 148, 136, 0.14);
+  margin: 0;
+  width: 100%;
+  max-width: 36rem;
+}
+
+[data-theme='dark'] .frame {
+  background: #0d1f1c;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--petclinic-color-surface);
+  border-bottom: 1px solid var(--petclinic-color-border);
+}
+
+[data-theme='dark'] .titlebar {
+  background: #162a26;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--petclinic-color-border);
+}
+
+.dot:nth-child(1) { background: #ff5f57; }
+.dot:nth-child(2) { background: #febc2e; }
+.dot:nth-child(3) { background: #28c840; }
+
+.windowTitle {
+  font-family: var(--petclinic-font-mono);
+  font-size: 0.75rem;
+  color: var(--petclinic-color-muted);
+  margin-left: auto;
+  margin-right: auto;
+  letter-spacing: 0.03em;
+}
+
+.terminal {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--petclinic-font-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  /* Prevent mono text from clipping on narrow viewports */
+  -webkit-overflow-scrolling: touch;
+  background: transparent;
+  border: none;
+  color: var(--petclinic-color-content);
+}
+
+.line {
+  display: block;
+}
+
+.info  { color: #0D9488; }
+.ok    { color: #16a34a; font-weight: 600; }
+.prompt { color: var(--petclinic-color-accent); font-weight: 700; }
+.log   { color: var(--petclinic-color-content); }
+.muted { color: var(--petclinic-color-muted); }
+.dim   { color: var(--petclinic-color-border); }
+
+[data-theme='dark'] .info  { color: #2dd4bf; }
+[data-theme='dark'] .ok    { color: #4ade80; }
+[data-theme='dark'] .prompt { color: #fb923c; }
+[data-theme='dark'] .dim   { color: #2a4e48; }
+
+.caption {
+  display: block;
+  text-align: center;
+  padding: 0.5rem 1rem 0.75rem;
+  font-family: var(--petclinic-font-body);
+  font-size: 0.8rem;
+  color: var(--petclinic-color-muted);
+  border-top: 1px solid var(--petclinic-color-border);
+  background: var(--petclinic-color-surface);
+}
+
+[data-theme='dark'] .caption {
+  background: #162a26;
+}

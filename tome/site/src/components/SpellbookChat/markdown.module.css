@@ -1,0 +1,343 @@
+/* Markdown rendering for SpellbookChat assistant messages.
+   Theming follows the grimoire dark palette (violet + candlelight gold). */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  font-family: var(--grim-font-chat);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--grim-text);
+  word-break: break-word;
+}
+
+.root > *:first-child {
+  margin-top: 0;
+}
+
+.root > *:last-child {
+  margin-bottom: 0;
+}
+
+.paragraph {
+  margin: 0;
+}
+
+.heading {
+  margin: 0.4em 0 0.1em;
+  font-family: var(--grim-font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  color: var(--grim-text);
+}
+
+.subheading {
+  margin: 0.4em 0 0.1em;
+  font-family: var(--grim-font-display);
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--grim-text);
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.listItem {
+  padding-left: 0.1rem;
+}
+
+.listItem::marker {
+  color: var(--grim-violet);
+}
+
+.link {
+  color: var(--grim-gold);
+  text-decoration: underline;
+  text-decoration-color: oklch(0.74 0.15 70 / 0.45);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 120ms ease;
+}
+
+.link:hover {
+  text-decoration-color: var(--grim-gold);
+}
+
+.blockquote {
+  margin: 0;
+  padding: 0.4em 0.9em;
+  border-left: 2px solid var(--grim-violet);
+  background: oklch(0.18 0.04 285 / 0.6);
+  border-radius: 0 var(--grim-radius-sm) var(--grim-radius-sm) 0;
+  color: var(--grim-text-muted);
+  font-style: italic;
+}
+
+.rule {
+  border: none;
+  border-top: 1px solid var(--grim-rule);
+  margin: 0.6em 0;
+}
+
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--grim-radius-sm);
+  border: 1px solid var(--grim-rule);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.table th,
+.table td {
+  padding: 0.4em 0.7em;
+  text-align: left;
+  border-bottom: 1px solid var(--grim-rule);
+}
+
+.table th {
+  background: var(--grim-surface);
+  font-weight: 600;
+  color: var(--grim-text);
+  letter-spacing: 0.02em;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---------- Inline code ---------- */
+
+.inlineCode {
+  font-family: var(--grim-font-mono);
+  font-size: 0.85em;
+  padding: 0.06em 0.4em;
+  border-radius: 4px;
+  background: oklch(0.22 0.03 285 / 0.85);
+  border: 1px solid var(--grim-rule);
+  color: var(--grim-gold);
+}
+
+/* ---------- Fenced code blocks ---------- */
+
+.codeBlock {
+  margin: 0.1em 0;
+  border-radius: var(--grim-radius-md);
+  border: 1px solid var(--grim-rule);
+  background: oklch(0.12 0.025 282);
+  overflow: hidden;
+}
+
+.codeBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35em 0.7em;
+  background: oklch(0.16 0.028 282);
+  border-bottom: 1px solid var(--grim-rule);
+  font-family: var(--grim-font-ui);
+  font-size: 0.7rem;
+}
+
+.codeBlockLang {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--grim-text-subtle);
+}
+
+.codeCopyButton {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--grim-text-muted);
+  font-family: var(--grim-font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.codeCopyButton:hover {
+  color: var(--grim-gold);
+  background: oklch(0.22 0.03 285);
+}
+
+.codeBlockPre {
+  margin: 0;
+  padding: 0.75em 0.9em;
+  overflow-x: auto;
+  font-family: var(--grim-font-mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  background: transparent;
+}
+
+.codeBlockCode {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  color: var(--grim-text);
+  font-family: inherit;
+  font-size: inherit;
+  white-space: pre;
+}
+
+/* ---------- highlight.js dark theme overrides ---------- */
+/* Scoped via :global so highlight.js's emitted classes apply only inside .root */
+
+.root :global(.hljs) {
+  color: var(--grim-text);
+  background: transparent;
+}
+
+.root :global(.hljs-comment),
+.root :global(.hljs-quote) {
+  color: oklch(0.55 0.025 285);
+  font-style: italic;
+}
+
+.root :global(.hljs-keyword),
+.root :global(.hljs-selector-tag),
+.root :global(.hljs-tag) {
+  color: oklch(0.78 0.16 300);
+}
+
+.root :global(.hljs-string),
+.root :global(.hljs-attr),
+.root :global(.hljs-meta-string) {
+  color: oklch(0.85 0.13 78);
+}
+
+.root :global(.hljs-number),
+.root :global(.hljs-literal),
+.root :global(.hljs-built_in),
+.root :global(.hljs-type) {
+  color: oklch(0.82 0.16 200);
+}
+
+.root :global(.hljs-title),
+.root :global(.hljs-name),
+.root :global(.hljs-section) {
+  color: oklch(0.88 0.12 100);
+}
+
+.root :global(.hljs-variable),
+.root :global(.hljs-template-variable),
+.root :global(.hljs-property) {
+  color: oklch(0.92 0.04 290);
+}
+
+.root :global(.hljs-symbol),
+.root :global(.hljs-bullet),
+.root :global(.hljs-link) {
+  color: var(--grim-violet);
+}
+
+.root :global(.hljs-deletion) {
+  color: oklch(0.7 0.16 28);
+}
+
+.root :global(.hljs-addition) {
+  color: oklch(0.78 0.18 145);
+}
+
+.root :global(.hljs-emphasis) {
+  font-style: italic;
+}
+
+.root :global(.hljs-strong) {
+  font-weight: 600;
+}
+
+/* =============================================================
+   LIGHT THEME OVERRIDES — surfaces and syntax colours above are
+   dark-palette only; correct them here.
+   ============================================================= */
+
+:global([data-theme="light"]) .link {
+  text-decoration-color: color-mix(in oklch, var(--grim-gold) 45%, transparent);
+}
+
+:global([data-theme="light"]) .listItem::marker {
+  color: var(--grim-violet-deep);
+}
+
+:global([data-theme="light"]) .blockquote {
+  background: color-mix(in oklch, var(--grim-violet) 8%, var(--grim-surface));
+}
+
+:global([data-theme="light"]) .inlineCode {
+  background: var(--grim-code-bg);
+  color: var(--grim-violet-deep);
+  border-color: color-mix(in oklch, var(--grim-violet) 20%, var(--grim-rule));
+}
+
+:global([data-theme="light"]) .codeBlock {
+  background: var(--grim-code-bg);
+}
+
+:global([data-theme="light"]) .codeBlockHeader {
+  background: var(--grim-surface-2);
+}
+
+:global([data-theme="light"]) .codeCopyButton:hover {
+  background: var(--grim-surface-3);
+}
+
+/* Light theme: remap hljs syntax colours for a light code background */
+:global([data-theme="light"]) .root :global(.hljs-comment),
+:global([data-theme="light"]) .root :global(.hljs-quote) {
+  color: oklch(0.56 0.03 285);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-keyword),
+:global([data-theme="light"]) .root :global(.hljs-selector-tag),
+:global([data-theme="light"]) .root :global(.hljs-tag) {
+  color: oklch(0.45 0.22 298);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-string),
+:global([data-theme="light"]) .root :global(.hljs-attr),
+:global([data-theme="light"]) .root :global(.hljs-meta-string) {
+  color: oklch(0.5 0.15 58);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-number),
+:global([data-theme="light"]) .root :global(.hljs-literal),
+:global([data-theme="light"]) .root :global(.hljs-built_in),
+:global([data-theme="light"]) .root :global(.hljs-type) {
+  color: oklch(0.48 0.18 210);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-title),
+:global([data-theme="light"]) .root :global(.hljs-name),
+:global([data-theme="light"]) .root :global(.hljs-section) {
+  color: oklch(0.48 0.15 88);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-variable),
+:global([data-theme="light"]) .root :global(.hljs-template-variable),
+:global([data-theme="light"]) .root :global(.hljs-property) {
+  color: oklch(0.4 0.03 285);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-deletion) {
+  color: oklch(0.48 0.2 25);
+}
+
+:global([data-theme="light"]) .root :global(.hljs-addition) {
+  color: oklch(0.44 0.2 148);
+}

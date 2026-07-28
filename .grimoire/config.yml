@@ -1,0 +1,295 @@
+# Grimoire configuration — https://github.com/kpritam/grimoire
+# Lives at .grimoire/config.yml; siblings `seal.json` and
+# `progress.json` share the `.grimoire/` folder so the repo root stays clean.
+#
+# Every option below is documented inline, with sensible alternatives
+# shown as commented-out examples — skim this file instead of the docs
+# for routine tweaks. Re-run `grimoire init` any time to regenerate it.
+# ------------------------------------------------------------------
+
+# Schema version — bumped on breaking config changes. Keep at 1.
+version: 1
+
+# --- Provider ------------------------------------------------
+# `provider:` is a tagged struct keyed by `id`. The wire protocol
+# (Agent Client Protocol) is uniform across every supported agent,
+# so all eight share the same `options:` shape — there are no
+# per-agent CLI flags.
+#
+# Supported ids (every one of `spawn-agent`'s built-in adapters):
+#   claude    Claude Code        (requires @anthropic-ai/claude-code)
+#   codex     OpenAI Codex       (requires @openai/codex)
+#   copilot   GitHub Copilot CLI (requires @github/copilot)
+#   cursor    Cursor Agent       (requires cursor-agent)
+#   gemini    Gemini CLI         (requires @google/gemini-cli)
+#   opencode  OpenCode           (requires opencode-ai)
+#   droid     Factory Droid      (requires droid)
+#   pi        Pi                 (requires @mariozechner/pi-coding-agent)
+provider:
+  id: claude
+  options:
+    model: claude-sonnet-5
+    #
+    # Reasoning-effort level (Claude only): low | medium | high | max.
+    # Forwarded via the same generic `session/set_config` mechanism as
+    # `model`. Only takes effect once spawn-agent resolves
+    # @agentclientprotocol/claude-agent-acp >= 0.58 — a no-op today.
+    # effort: high
+    #
+    # Permission policy for the agent's tool calls. Grimoire runs
+    # unattended, so the default of `auto-allow` is the right thing.
+    # Other choices: `auto-allow-once`, `auto-reject`.
+    # permission: auto-allow
+    #
+    # Idle timeout (ms). Forwarded to spawn-agent as
+    # `inactivityTimeoutMs`. Defaults to spawn-agent's 3-minute floor.
+    # inactivity-timeout-ms: 600000
+    #
+    # Extra absolute paths the agent may read/write outside `cwd`.
+    # additional-directories:
+    #   - /tmp/grimoire-staging
+    #
+    # System prompt prepended to every turn.
+    # system-prompt: |
+    #   Always cite file paths with line numbers.
+
+# Where Grimoire writes its output. Override to `./docs`, `./wiki`,
+# `./handbook`, or anywhere else — every prompt uses whatever you
+# configure here, no hard-coded directory names leak into pages.
+output: ./tome
+
+# Output format for generated pages.
+# `markdown` | `mdx` | `html`
+format: markdown
+
+# --- Site scaffolding ---------------------------------------
+site:
+  # `docusaurus` | `starlight` | `none`
+  # docusaurus — Battle-tested, MDX, mature plugins; starlight — Astro-native, fast, great defaults; none — Just markdown — bring your own site.
+  framework: docusaurus
+  #
+  # Optional branding — shown in the site chrome (navbar, footer,
+  # favicon) AND woven into the in-browser chat persona so the
+  # assistant introduces itself as this project's docs helper.
+  # title: My Project
+  # tagline: Docs that keep up with the code
+  #
+  # Absolute URL of the source repo. When set, supported output layers
+  # surface a "View source" link in the site chrome (e.g. the Docusaurus
+  # navbar, Starlight social links).
+  # repo: https://github.com/acme/project
+
+# --- Prompts -------------------------------------------------
+prompts:
+  # `default` uses the bundled system prompt (recommended).
+  # Provide an absolute path or `@./path/to/prompt.md` to override.
+  system: default
+  # Free-form extra context appended to every cast. Literal text,
+  # or `@path/to/file.md` to inline a file.
+  context: ""
+
+# --- Tracking ------------------------------------------------
+tracking:
+  # Commit `.grimoire/seal.json` so every teammate / CI run agrees
+  # on the last successful documentation cast. `grimoire init`
+  # wires the gitignore so runtime state stays out of history.
+  sha-file: .grimoire/seal.json
+  auto-seal: true
+  # Agent-managed resume checkpoint. Grimoire passes the path to
+  # the agent in the prompt; the agent owns reads and writes.
+  progress-file: .grimoire/progress.json
+  #
+  # --- Source-delta gate (optional) --------------------------
+  # Tell `grimoire sync` which paths actually represent the
+  # source code your docs describe. When configured, a sync
+  # whose `git diff seal..HEAD` touches none of these short-
+  # circuits BEFORE invoking the agent — saves tokens AND avoids
+  # the SHA-only PR every teammate hates ("Bump seal to abc123").
+  #
+  # Patterns are gitignore-style globs (Grimoire passes them to
+  # git as pathspecs internally, so they mean exactly what they
+  # would in a `.gitignore`). `**` is recursive; leading `/` is
+  # root-anchored; trailing `/` matches directories only.
+  #
+  # Filter order:
+  #   1. Start from `include` (default `["**"]` — everything).
+  #   2. Subtract `exclude`.
+  #   3. Subtract Grimoire's safety set: the configured `output:`
+  #      directory, this seal file, the progress file, and
+  #      `.grimoire/**`. These are ALWAYS excluded (so a sync
+  #      can't react to artifacts it just produced) and you do
+  #      not need to list them here.
+  #
+  # Omit the whole `sources` block to keep the legacy "every
+  # changed file triggers sync" behaviour.
+  #
+  # sources:
+  #   include:
+  #     - "src/**"
+  #     - "packages/**/src/**"
+  #     - ".github/workflows/**"
+  #     - "action.yml"
+  #   exclude:
+  #     - "**/*.test.ts"
+  #     - "**/*.snap"
+
+# --- Concurrency --------------------------------------------
+concurrency:
+  # Retries on timeout or non-zero exit. `1` matches the default;
+  # raise for flaky CLIs, `0` to disable.
+  retries: 1
+  # `false` (default): cast/sync always start fresh; Grimoire wipes
+  # any stale `progress.json` before the agent runs, so prior runs
+  # cannot bias new ones. Flip to `true` (or pass `--resume`) when
+  # you want the agent to rehydrate from its checkpoint after an
+  # interruption.
+  resume: false
+  # Default `true`: `cast` splits into a Write phase and a Design
+  # phase (each a fresh agent session) whenever a site framework is
+  # active. Set `false` to restore the single-session prompt.
+  split-design-phase: true
+  # Max wall clock for a single agent subprocess (ms). Omitted: 1800000 (30 min).
+  # agent-timeout-ms: 1800000
+  # Idle timeout: kill the turn if the agent emits no meaningful
+  # update for N ms (default 600000 = 10 min). Forwarded to
+  # spawn-agent as `inactivityTimeoutMs`.
+  # agent-idle-timeout-ms: 600000
+
+# --- Publish targets ----------------------------------------
+# Grimoire-managed publish integrations. All optional.
+publish:
+  github-pages: false
+
+# --- Logging -------------------------------------------------
+logging:
+  # Mirror agent subprocess output to the terminal. Boolean, or
+  # `"tty"` to enable only when stderr is a TTY (default). When on,
+  # spawn-agent's typed events (`text-delta`, `tool-call`, …) are
+  # written to stdout one per line as they arrive.
+  stream-agent: tty
+  # `debug` | `info` | `warn` | `error`
+  level: info
+
+# --- Skills (agent-install) ---------------------------------
+# Each entry maps to one `installSkillsFromSource({ source, … })`
+# call. `source` accepts every shape `agent-install` accepts:
+#
+#   - `owner/repo`            (GitHub)
+#   - full git URL
+#   - https URL to a SKILL.md
+#   - https URL on `well-known` (e.g. https://skills.sh/...)
+#   - local filesystem path
+#
+# Per-entry knobs:
+#   - `agents`     — narrow install targets to specific agent slugs.
+#                    When omitted, agent-install detects installed
+#                    agents and falls back to `universal`.
+#   - `skills`     — when `source` ships multiple SKILL.md files,
+#                    install only the named subset.
+#   - `mode`       — `symlink` (default) or `copy`. Copy when the
+#                    source is a transient build that may be deleted.
+#   - `global`     — install into `~/.<agent>/skills` instead of the
+#                    project. Defaults to `false`.
+#   - `directive`  — inline prompt directive spliced into the cast
+#                    prompt. Without one, the skill is installed but
+#                    the agent receives no `<skill>` block telling it
+#                    to use it — set `tag` to the XML attributes (e.g.
+#                    `skill id="my-skill"`) and `body` to the prose.
+#
+# The install folders (`.agents/skills/`, `.claude/skills/`,
+# `.copilot/skills/`, …) are gitignored by `grimoire init` — the
+# trees regenerate on every cast.
+#
+skills:
+  install:
+    - source: nextlevelbuilder/ui-ux-pro-max-skill
+      directive:
+        tag: skill id="ui-ux-pro-max"
+        body: 'Claims lanes: palette, atmosphere, layout density, responsive recipe. Required before authoring theme CSS — run
+          its `scripts/search.py "<brand register + 3 brand-voice words + industry>" --design-system --persist
+          --output-dir .grimoire -p "<product name>" --stack react --variance 6-8 --density 4-6 --motion 5-7` (`--stack
+          astro` for Starlight; pick variance/density for a full-bleed marketing homepage, not dashboard density — never
+          skip `--design-system`). This persists `.grimoire/design-system/<slug>/MASTER.md`, the exact source
+          `<design-theme>` and `<diagrams>` already require. Follow up with `--domain landing`/`--domain color`/`--domain
+          typography` searches as needed.'
+    - source: pbakaus/impeccable
+      directive:
+        tag: skill id="impeccable"
+        body: "Claims lanes: typography, type scale, font loading, final polish. `$impeccable <command> <target>` means call the
+          Skill tool with skill: \"impeccable\", args: \"<command> <target>\" — this is the Skill tool, NOT a terminal/CLI
+          command and NOT something to run via context.mjs directly; the first word of args is the command, everything
+          after is the target, never chain multiple commands in one call. Set env `IMPECCABLE_CONTEXT_DIR=.grimoire` via a
+          Bash/Terminal call before the first Skill-tool invocation of impeccable — the Skill tool itself cannot set
+          environment variables, so export it in a preceding shell command, not inside the skill call (keeps its
+          PRODUCT.md/DESIGN.md inside the write boundary). Cover every surface — homepage, at least one representative doc
+          page, AND the SpellbookChat launcher + panel — never hero-only. Sequence: `audit <output>/site` first (read-only
+          diagnostic; apply whichever of its recommended commands fit per surface —
+          `bolder`/`colorize`/`typeset`/`animate`/`overdrive`/`delight` — do not skip ones it recommends) -> `polish
+          <output>/site` as the LAST step, immediately before `<verify>` runs, never earlier. If a bundled script reports
+          `node` missing, hunt for a runtime (`command -v node`, nvm/Homebrew paths, this harness's own bundled node) and
+          rerun by full path before falling back to applying the command's reference file manually — a missing PATH entry
+          is not the same as the tool being unavailable."
+
+# --- MCP servers (agent-install) ----------------------------
+# Grimoire always auto-registers its own docs MCP server
+# (`@kpritam/grimoire-mcp`) for the active agent on every `cast`,
+# on top of anything configured here. Set `mcp.enabled: false` to
+# opt out of that auto-registration.
+#
+# Each entry below maps to one `installMcpServer({ source, … })`
+# call. `source` accepts every shape `agent-install` accepts:
+#
+#   - npm package name (e.g. `@modelcontextprotocol/server-postgres`)
+#   - command spec    (e.g. `npx -y my-mcp-server`)
+#   - remote URL      (https://… for `http`/`sse` transports)
+#
+# Per-entry knobs:
+#   - `name`      — override the inferred server name.
+#   - `agents`    — narrow install targets (e.g.
+#                   `["claude-code", "cursor"]`). When omitted,
+#                   agent-install installs into every detectable
+#                   agent that supports the configured transport.
+#   - `global`    — install into the global config instead of the
+#                   project.
+#   - `transport` — `http` | `sse`. Required for remote URL sources.
+#   - `headers`   — custom HTTP headers for remote servers.
+#   - `env`       — environment variables exposed to stdio servers.
+#
+# mcp:
+#   install:
+#     - source: https://mcp.context7.com/mcp
+#       transport: http
+#       name: context7
+#     - source: "@modelcontextprotocol/server-filesystem"
+#       agents: ["claude-code"]
+#     - source: "@modelcontextprotocol/server-postgres"
+#       agents: ["claude-code"]
+#       env:
+#         DATABASE_URL: "postgres://..."
+
+# --- In-browser chat / RAG index ----------------------------
+# Grimoire ships an optional in-browser AI chat (text + voice) that
+# lives in the bottom-right corner of the generated site. It runs
+# entirely in the user's browser (BYOK for Anthropic / OpenAI /
+# Gemini, plus a local WebLLM option) against a static RAG bundle
+# built from the tome itself. API keys stay in tab memory only —
+# they're never written to localStorage or any other persistence.
+# The assistant persona is derived from `site.title` + `site.tagline`
+# so answers align with this project's voice and scope.
+#
+# `index.enabled` is the master switch:
+#
+#   - `true`  (default) — `grimoire cast`/`sync` regenerates the index
+#                          (chunks.json, vectors.bin, manifest.json)
+#                          AND the Docusaurus site bundles the chat UI.
+#
+#   - `false`           — no index is written, AND the next site build
+#                          tree-shakes the chat panel out entirely.
+#
+# Failures during indexing are non-fatal: the cast/sync run still
+# succeeds and the seal still refreshes when `tracking.auto-seal` is on.
+#
+index:
+  enabled: true
+  model: Snowflake/snowflake-arctic-embed-xs
+  exclude: []

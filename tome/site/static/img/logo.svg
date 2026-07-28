@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Spring PetClinic">
+  <title>Spring PetClinic</title>
+  <style>
+    .logo-fill { fill: #0D9488; }
+    .logo-accent { fill: #EA580C; }
+    @media (prefers-color-scheme: dark) {
+      .logo-fill { fill: #2dd4bf; }
+      .logo-accent { fill: #fb923c; }
+    }
+  </style>
+  <!-- Paw print: 4 toes + main pad -->
+  <ellipse class="logo-fill" cx="17" cy="20" rx="6" ry="7"/>
+  <ellipse class="logo-fill" cx="28" cy="14" rx="6" ry="7"/>
+  <ellipse class="logo-fill" cx="40" cy="14" rx="6" ry="7"/>
+  <ellipse class="logo-fill" cx="51" cy="20" rx="6" ry="7"/>
+  <!-- Main pad -->
+  <ellipse class="logo-fill" cx="34" cy="42" rx="14" ry="12"/>
+  <!-- Veterinary cross mark (top-right corner) -->
+  <rect class="logo-accent" x="50" y="36" width="4" height="14" rx="2"/>
+  <rect class="logo-accent" x="44" y="42" width="16" height="4" rx="2"/>
+</svg>
