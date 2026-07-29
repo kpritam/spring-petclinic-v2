@@ -9,8 +9,6 @@ import {
   useState,
 } from "react";
 
-import { useBaseUrlUtils } from "@docusaurus/useBaseUrl";
-
 import type { Citation } from "./types";
 import ChatErrorBoundary from "./ChatErrorBoundary";
 import Markdown from "./Markdown";
@@ -185,12 +183,6 @@ function CitationList(props: {
   readonly citations: readonly Citation[];
 }): ReactNode {
   const { citations } = props;
-  // Single hook call at the top of the component (not per-citation inside
-  // the `.map` below) — `withBaseUrl` is a stable callback we can invoke
-  // per-item without violating the rules of hooks. It prefixes the site's
-  // GitHub Pages base path (e.g. `/repo/`) onto root-relative citation
-  // links and leaves `#anchor` / absolute http(s) links untouched.
-  const { withBaseUrl } = useBaseUrlUtils();
   if (!Array.isArray(citations) || citations.length === 0) {
     return null;
   }
@@ -204,15 +196,7 @@ function CitationList(props: {
         const headings: readonly string[] = Array.isArray(c.headings)
           ? c.headings
           : [];
-        // Only show the `#anchor` fragment in the label when it's actually
-        // part of the link — the index builder omits it from `sourceLink`
-        // for sections under a page's H1 title (Docusaurus never renders
-        // an id there), even though `c.anchor` itself is still populated
-        // for internal grouping. Showing it here would promise a scroll
-        // target the click won't deliver.
-        const linkHasAnchor =
-          typeof c.sourceLink === "string" && c.sourceLink.includes("#");
-        const pathLabel = `${c.file}${linkHasAnchor ? `#${c.anchor}` : ""}`;
+        const pathLabel = `${c.file}${c.anchor ? `#${c.anchor}` : ""}`;
         const inner = (
           <>
             <div className={styles.citationPath}>{pathLabel}</div>
@@ -223,8 +207,7 @@ function CitationList(props: {
             ) : null}
           </>
         );
-        const sanitized = safeCitationHref(c.sourceLink);
-        const href = sanitized ? withBaseUrl(sanitized) : undefined;
+        const href = safeCitationHref(c.sourceLink);
         if (href) {
           const external = href.startsWith("http");
           return (

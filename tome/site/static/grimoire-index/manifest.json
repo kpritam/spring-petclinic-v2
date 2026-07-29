@@ -3,8 +3,8 @@
   "model": "Snowflake/snowflake-arctic-embed-xs",
   "dim": 384,
   "count": 76,
-  "sealSha": "f182358d02e4a68e52bdbabf55ca7800288511e7",
-  "generatedAt": "2026-07-28T18:17:14.336Z",
+  "sealSha": "ea417b28a4e3653d1635f8446cc6ede75cd1a2cc",
+  "generatedAt": "2026-07-29T00:52:44.630Z",
   "format": "f32-le",
   "repo": "kpritam/spring-petclinic-v2"
 }
