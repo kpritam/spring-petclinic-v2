@@ -47,6 +47,7 @@ _site/
 *.css
 !petclinic.css
 !*.module.css
+!tome/site/src/css/*.css
 
 # BEGIN grimoire
 # Runtime state produced by Grimoire — commit .grimoire/seal.json so every
