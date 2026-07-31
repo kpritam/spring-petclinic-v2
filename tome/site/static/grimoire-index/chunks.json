@@ -844,10 +844,10 @@
       "HTTP endpoints",
       "Vet endpoints"
     ],
-    "text": "Handled by `VetController` (`vet/VetController.java`).\n\n| Method | Path | Produces | Description |\n|--------|------|----------|-------------|\n| `GET` | `/vets.html` | `text/html` | Paginated vet list with specialties |\n| `GET` | `/vets` | `application/json` or `application/xml` | Vet list as JSON or XML (content-negotiated) |",
+    "text": "Handled by `VetController` (`vet/VetController.java`).\n\n| Method | Path | Produces | Description |\n|--------|------|----------|-------------|\n| `GET` | `/vets.html` | `text/html` | Paginated vet list with specialties |\n| `GET` | `/vets` | `application/json` or `application/xml` | Paginated vet list as JSON or XML (content-negotiated) |\n| `GET` | `/vets/{vetId}` | `application/json` or `application/xml` | Single vet by ID; 404 if not found |",
     "anchor": "vet-endpoints",
     "sourceLink": "/reference/endpoints#vet-endpoints",
-    "tokens": 82
+    "tokens": 111
   },
   {
     "id": "reference/endpoints.md#query-parameters--get-vetshtml-0",
@@ -857,10 +857,23 @@
       "Vet endpoints",
       "Query parameters — `GET /vets.html`"
     ],
-    "text": "| Parameter | Type | Default | Description |\n|-----------|------|---------|-------------|\n| `page` | `int` | `1` | Page number (1-based). Page size is fixed at 5. |\n\nVet data is cached (cache name: `vets`) and served from cache on subsequent requests within the same application process.",
+    "text": "| Parameter | Type | Default | Description |\n|-----------|------|---------|-------------|\n| `page` | `int` | `1` | Page number (1-based). Page size is fixed at 5. |",
     "anchor": "query-parameters--get-vetshtml",
     "sourceLink": "/reference/endpoints#query-parameters--get-vetshtml",
-    "tokens": 72
+    "tokens": 41
+  },
+  {
+    "id": "reference/endpoints.md#query-parameters--get-vets-0",
+    "file": "reference/endpoints.md",
+    "headings": [
+      "HTTP endpoints",
+      "Vet endpoints",
+      "Query parameters — `GET /vets`"
+    ],
+    "text": "| Parameter | Type | Default | Description |\n|-----------|------|---------|-------------|\n| `page` | `int` | `1` | Page number (1-based). |\n| `size` | `int` | `5` | Page size. |\n\nThe response is a `Vets` wrapper object with fields `vetList`, `currentPage`, `totalPages`, and `totalItems`.\n\nList responses (`/vets.html` and `GET /vets`) are cached (cache name: `vets`). `GET /vets/{vetId}` is not cached. When the vet ID does not exist, `GET /vets/{vetId}` returns HTTP 404 with message `Vet not found with id: {vetId}`.",
+    "anchor": "query-parameters--get-vets",
+    "sourceLink": "/reference/endpoints#query-parameters--get-vets",
+    "tokens": 130
   },
   {
     "id": "reference/endpoints.md#system-endpoints-0",

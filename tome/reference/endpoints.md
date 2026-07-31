@@ -61,7 +61,8 @@ Handled by `VetController` (`vet/VetController.java`).
 | Method | Path | Produces | Description |
 |--------|------|----------|-------------|
 | `GET` | `/vets.html` | `text/html` | Paginated vet list with specialties |
-| `GET` | `/vets` | `application/json` or `application/xml` | Vet list as JSON or XML (content-negotiated) |
+| `GET` | `/vets` | `application/json` or `application/xml` | Paginated vet list as JSON or XML (content-negotiated) |
+| `GET` | `/vets/{vetId}` | `application/json` or `application/xml` | Single vet by ID; 404 if not found |
 
 ### Query parameters — `GET /vets.html`
 
@@ -69,7 +70,16 @@ Handled by `VetController` (`vet/VetController.java`).
 |-----------|------|---------|-------------|
 | `page` | `int` | `1` | Page number (1-based). Page size is fixed at 5. |
 
-Vet data is cached (cache name: `vets`) and served from cache on subsequent requests within the same application process.
+### Query parameters — `GET /vets`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | `int` | `1` | Page number (1-based). |
+| `size` | `int` | `5` | Page size. |
+
+The response is a `Vets` wrapper object with fields `vetList`, `currentPage`, `totalPages`, and `totalItems`.
+
+List responses (`/vets.html` and `GET /vets`) are cached (cache name: `vets`). `GET /vets/{vetId}` is not cached. When the vet ID does not exist, `GET /vets/{vetId}` returns HTTP 404 with message `Vet not found with id: {vetId}`.
 
 ## System endpoints
 
