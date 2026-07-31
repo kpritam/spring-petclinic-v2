@@ -31,6 +31,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * Simple JavaBean domain object representing a veterinarian.
@@ -42,6 +43,7 @@ import jakarta.xml.bind.annotation.XmlElement;
  */
 @Entity
 @Table(name = "vets")
+@XmlRootElement(name = "vet")
 public class Vet extends Person {
 
 	@ManyToMany(fetch = FetchType.EAGER)

@@ -32,12 +32,45 @@ public class Vets {
 
 	private List<Vet> vets;
 
+	private int currentPage;
+
+	private int totalPages;
+
+	private long totalItems;
+
 	@XmlElement
 	public List<Vet> getVetList() {
 		if (vets == null) {
 			vets = new ArrayList<>();
 		}
 		return vets;
+	}
+
+	@XmlElement
+	public int getCurrentPage() {
+		return this.currentPage;
+	}
+
+	public void setCurrentPage(int currentPage) {
+		this.currentPage = currentPage;
+	}
+
+	@XmlElement
+	public int getTotalPages() {
+		return this.totalPages;
+	}
+
+	public void setTotalPages(int totalPages) {
+		this.totalPages = totalPages;
+	}
+
+	@XmlElement
+	public long getTotalItems() {
+		return this.totalItems;
+	}
+
+	public void setTotalItems(long totalItems) {
+		this.totalItems = totalItems;
 	}
 
 }
