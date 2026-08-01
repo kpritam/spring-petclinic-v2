@@ -16,6 +16,8 @@
 
 package org.springframework.samples.petclinic.vet;
 
+import java.util.Optional;
+
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,6 +78,8 @@ class VetControllerTests {
 		given(this.vets.findAll()).willReturn(Lists.newArrayList(james(), helen()));
 		given(this.vets.findAll(any(Pageable.class)))
 			.willReturn(new PageImpl<Vet>(Lists.newArrayList(james(), helen())));
+		given(this.vets.findById(1)).willReturn(Optional.of(james()));
+		given(this.vets.findById(99)).willReturn(Optional.empty());
 
 	}
 
@@ -94,7 +98,22 @@ class VetControllerTests {
 		ResultActions actions = mockMvc.perform(get("/vets").accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk());
 		actions.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-			.andExpect(jsonPath("$.vetList[0].id").value(1));
+			.andExpect(jsonPath("$.vetList[0].id").value(1))
+			.andExpect(jsonPath("$.currentPage").value(1))
+			.andExpect(jsonPath("$.totalItems").value(2));
+	}
+
+	@Test
+	void showResourcesVetDetails() throws Exception {
+		mockMvc.perform(get("/vets/1").accept(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.firstName").value("James"));
+	}
+
+	@Test
+	void showResourcesVetDetailsNotFound() throws Exception {
+		mockMvc.perform(get("/vets/99").accept(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
 	}
 
 }

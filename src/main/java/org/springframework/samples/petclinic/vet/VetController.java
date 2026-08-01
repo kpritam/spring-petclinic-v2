@@ -20,11 +20,14 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * @author Juergen Hoeller
@@ -43,7 +46,7 @@ class VetController {
 
 	@GetMapping("/vets.html")
 	public String showVetList(@RequestParam(defaultValue = "1") int page, Model model) {
-		Page<Vet> paginated = findPaginated(page);
+		Page<Vet> paginated = findPaginated(page, 5);
 		return addPaginationModel(page, paginated, model);
 	}
 
@@ -56,19 +59,29 @@ class VetController {
 		return "vets/vetList";
 	}
 
-	private Page<Vet> findPaginated(int page) {
-		int pageSize = 5;
+	private Page<Vet> findPaginated(int page, int pageSize) {
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
 		return vetRepository.findAll(pageable);
 	}
 
 	@GetMapping({ "/vets" })
-	public @ResponseBody Vets showResourcesVetList() {
+	public @ResponseBody Vets showResourcesVetList(@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "5") int size) {
 		// Here we are returning an object of type 'Vets' rather than a collection of Vet
 		// objects so it is simpler for JSon/Object mapping
+		Page<Vet> paginated = findPaginated(page, size);
 		Vets vets = new Vets();
-		vets.getVetList().addAll(this.vetRepository.findAll());
+		vets.getVetList().addAll(paginated.getContent());
+		vets.setCurrentPage(page);
+		vets.setTotalPages(paginated.getTotalPages());
+		vets.setTotalItems(paginated.getTotalElements());
 		return vets;
+	}
+
+	@GetMapping("/vets/{vetId}")
+	public @ResponseBody Vet showResourcesVetDetails(@PathVariable("vetId") int vetId) {
+		return this.vetRepository.findById(vetId)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vet not found with id: " + vetId));
 	}
 
 }
