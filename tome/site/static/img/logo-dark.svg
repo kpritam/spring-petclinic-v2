@@ -1,0 +1,13 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="Spring PetClinic">
+  <title>Spring PetClinic</title>
+  <!-- Toe pads: four bold ellipses in a tight arc -->
+  <ellipse cx="8.2" cy="10.2" rx="3.7" ry="4.5" fill="#2DD4BF"/>
+  <ellipse cx="14.8" cy="6.4" rx="3.8" ry="4.8" fill="#2DD4BF"/>
+  <ellipse cx="21.6" cy="6.9" rx="3.7" ry="4.6" fill="#2DD4BF"/>
+  <ellipse cx="27.2" cy="11.6" rx="3.4" ry="4.1" fill="#2DD4BF"/>
+  <!-- Main pad: large, confident rounded form -->
+  <path
+    d="M16 13C9.2 13 3.6 17.3 3.6 22.7C3.6 28 9.2 31.6 16 31.6C22.8 31.6 28.4 28 28.4 22.7C28.4 17.3 22.8 13 16 13Z"
+    fill="#2DD4BF"
+  />
+</svg>

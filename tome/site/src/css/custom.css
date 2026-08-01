@@ -1,0 +1,436 @@
+/* ============================================================
+   Spring PetClinic — Design Tokens
+   Scope: --petclinic-*
+   Palette: Caring teal (#0D9488) + warm orange (#EA580C)
+   Typography: Fredoka (display) / Nunito (body) / JetBrains Mono (code)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Project tokens: light ── */
+:root {
+  /* Fonts */
+  --petclinic-font-display: 'Fredoka', system-ui, sans-serif;
+  --petclinic-font-body: 'Nunito', system-ui, sans-serif;
+  --petclinic-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Palette */
+  --petclinic-primary:          #0D9488;
+  --petclinic-primary-dark:     #0f766e;
+  --petclinic-primary-darker:   #115e59;
+  --petclinic-primary-light:    #14b8a6;
+  --petclinic-primary-lighter:  #5eead4;
+  --petclinic-accent:           #EA580C;
+  --petclinic-accent-dark:      #c2410c;
+  --petclinic-accent-light:     #fb923c;
+  /* Orange-on-surface text (links, arrows): the base accent is only
+     3.3-3.6:1 on light surfaces, below the 4.5:1 body-text floor. */
+  --petclinic-link-accent:      var(--petclinic-accent-dark);
+
+  /* Surfaces */
+  --petclinic-bg:               #F0FDFA;
+  --petclinic-surface:          #E6FAF7;
+  --petclinic-surface-elevated: #FFFFFF;
+  --petclinic-content:          #134E4A;
+  --petclinic-muted:            #1D6B64;
+  --petclinic-border:           #A7F3D0;
+  --petclinic-border-strong:    #5EEAD4;
+
+  /* Semantic */
+  --petclinic-focus:            #0D9488;
+  --petclinic-success:          #16a34a;
+  --petclinic-error:            #DC2626;
+
+  /* Atmosphere */
+  --petclinic-bg-gradient: linear-gradient(
+    135deg,
+    #F0FDFA 0%,
+    #CCFBF1 45%,
+    #F0FDFA 70%,
+    #FFF7ED 100%
+  );
+  --petclinic-glow-primary: 0 0 60px rgba(13, 148, 136, 0.18),
+                             0 0 120px rgba(13, 148, 136, 0.08);
+  --petclinic-glow-accent:  0 0 40px rgba(234, 88, 12, 0.15);
+
+  /* Motion */
+  --petclinic-ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --petclinic-duration-fast: 120ms;
+  --petclinic-duration-base: 240ms;
+
+  /* Layout */
+  --petclinic-content-max: 72rem;
+
+  /* Shadows */
+  --petclinic-shadow-sm: 0 1px 2px rgba(13, 78, 74, 0.06);
+  --petclinic-shadow-md: 0 4px 12px rgba(13, 78, 74, 0.10);
+  --petclinic-shadow-lg: 0 8px 24px rgba(13, 78, 74, 0.12);
+  --petclinic-shadow-xl: 0 20px 40px rgba(13, 78, 74, 0.14);
+
+  /* Spacing */
+  --petclinic-space-xs:  4px;
+  --petclinic-space-sm:  8px;
+  --petclinic-space-md:  16px;
+  --petclinic-space-lg:  24px;
+  --petclinic-space-xl:  32px;
+  --petclinic-space-2xl: 48px;
+  --petclinic-space-3xl: 64px;
+
+  /* ── Infima overrides: light ── */
+  --ifm-color-primary:          #0D9488;
+  --ifm-color-primary-dark:     #0f766e;
+  --ifm-color-primary-darker:   #115e59;
+  --ifm-color-primary-darkest:  #134e4a;
+  --ifm-color-primary-light:    #14b8a6;
+  --ifm-color-primary-lighter:  #5eead4;
+  --ifm-color-primary-lightest: #99f6e4;
+
+  --ifm-background-color:         #F0FDFA;
+  --ifm-background-surface-color: #FFFFFF;
+  --ifm-color-content:            #134E4A;
+  --ifm-color-content-secondary:  #2D7A74;
+  --ifm-font-family-base:         'Nunito', system-ui, sans-serif;
+  --ifm-font-family-monospace:    'JetBrains Mono', ui-monospace, monospace;
+  --ifm-font-size-base:           17px;
+  --ifm-line-height-base:         1.65;
+  --ifm-heading-font-family:      'Fredoka', system-ui, sans-serif;
+  --ifm-heading-color:            #134E4A;
+  --ifm-code-font-size:           0.9rem;
+  --ifm-code-background:          #CCFBF1;
+  --ifm-link-color:               #0D9488;
+  --ifm-link-hover-color:         #0f766e;
+  --ifm-navbar-background-color:  #FFFFFF;
+  --ifm-navbar-shadow:            0 1px 0 #A7F3D0;
+  --ifm-toc-border-color:         #A7F3D0;
+  --ifm-footer-background-color:  #115e59;
+  --docusaurus-highlighted-code-line-bg: rgba(13, 148, 136, 0.08);
+
+  /* SpellbookChat launcher */
+  --spellbook-launcher-color:        #2D7A74;
+  --spellbook-launcher-color-active: #0D9488;
+  --spellbook-launcher-bg:           #FFFFFF;
+  --spellbook-launcher-border:       #5EEAD4;
+  --spellbook-launcher-shadow:       0 4px 12px rgba(13, 78, 74, 0.10);
+
+  /* Hero: drenched dark-teal band (Committed color strategy) */
+  --petclinic-hero-bg: linear-gradient(160deg, #0f766e 0%, #115e59 45%, #0b3c39 100%);
+  --petclinic-hero-ink:          #F0FDFA;
+  --petclinic-hero-ink-muted:    #A7F3D0;
+  --petclinic-hero-badge-bg:     rgba(255, 255, 255, 0.10);
+  --petclinic-hero-badge-border: rgba(94, 234, 212, 0.35);
+  --petclinic-hero-border:       rgba(94, 234, 212, 0.20);
+  --petclinic-hero-glow-primary: 0 0 120px rgba(45, 212, 191, 0.35), 0 0 220px rgba(45, 212, 191, 0.15);
+  --petclinic-hero-glow-accent:  0 0 100px rgba(251, 146, 60, 0.30);
+}
+
+/* ── Project tokens: dark ── */
+[data-theme='dark'] {
+  --petclinic-primary:          #2DD4BF;
+  --petclinic-primary-dark:     #14b8a6;
+  --petclinic-primary-darker:   #0d9488;
+  --petclinic-primary-light:    #5eead4;
+  --petclinic-primary-lighter:  #99f6e4;
+  --petclinic-accent:           #F97316;
+  --petclinic-accent-dark:      #EA580C;
+  --petclinic-accent-light:     #FB923C;
+  /* Dark surfaces need the lighter end of the ramp to clear 4.5:1. */
+  --petclinic-link-accent:      var(--petclinic-accent-light);
+
+  --petclinic-bg:               #0D1F1E;
+  --petclinic-surface:          #152928;
+  --petclinic-surface-elevated: #1E3534;
+  --petclinic-content:          #CCFBF1;
+  --petclinic-muted:            #6EE7D8;
+  --petclinic-border:           #1E4A46;
+  --petclinic-border-strong:    #0d9488;
+
+  --petclinic-bg-gradient: linear-gradient(
+    135deg,
+    #0D1F1E 0%,
+    #0A2522 45%,
+    #0D1F1E 70%,
+    #1A160A 100%
+  );
+  --petclinic-glow-primary: 0 0 80px rgba(45, 212, 191, 0.20),
+                             0 0 160px rgba(45, 212, 191, 0.08);
+  --petclinic-glow-accent:  0 0 60px rgba(249, 115, 22, 0.18);
+
+  --petclinic-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --petclinic-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --petclinic-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.40);
+  --petclinic-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.45);
+
+  /* Infima overrides: dark */
+  --ifm-color-primary:          #2DD4BF;
+  --ifm-color-primary-dark:     #14b8a6;
+  --ifm-color-primary-darker:   #0d9488;
+  --ifm-color-primary-darkest:  #0f766e;
+  --ifm-color-primary-light:    #5eead4;
+  --ifm-color-primary-lighter:  #99f6e4;
+  --ifm-color-primary-lightest: #ccfbf1;
+
+  --ifm-background-color:         #0D1F1E;
+  --ifm-background-surface-color: #1E3534;
+  --ifm-color-content:            #CCFBF1;
+  --ifm-color-content-secondary:  #6EE7D8;
+  --ifm-heading-color:            #CCFBF1;
+  --ifm-code-background:          #0A2522;
+  --ifm-link-color:               #2DD4BF;
+  --ifm-link-hover-color:         #5eead4;
+  --ifm-navbar-background-color:  #152928;
+  --ifm-navbar-shadow:            0 1px 0 #1E4A46;
+  --ifm-toc-border-color:         #1E4A46;
+  --ifm-footer-background-color:  #0A1514;
+  --docusaurus-highlighted-code-line-bg: rgba(45, 212, 191, 0.08);
+
+  /* SpellbookChat launcher: dark */
+  --spellbook-launcher-color:        #6EE7D8;
+  --spellbook-launcher-color-active: #2DD4BF;
+  --spellbook-launcher-bg:           #1E3534;
+  --spellbook-launcher-border:       #0d9488;
+  --spellbook-launcher-shadow:       0 4px 12px rgba(0, 0, 0, 0.35);
+
+  /* Hero: drenched dark-teal band, deeper still against a dark shell */
+  --petclinic-hero-bg: linear-gradient(160deg, #0d3230 0%, #081f1e 55%, #051413 100%);
+  --petclinic-hero-ink:          #ECFDF5;
+  --petclinic-hero-ink-muted:    #7FE0D0;
+  --petclinic-hero-badge-bg:     rgba(255, 255, 255, 0.06);
+  --petclinic-hero-badge-border: rgba(45, 212, 191, 0.30);
+  --petclinic-hero-border:       rgba(45, 212, 191, 0.18);
+  --petclinic-hero-glow-primary: 0 0 140px rgba(45, 212, 191, 0.30), 0 0 260px rgba(45, 212, 191, 0.14);
+  --petclinic-hero-glow-accent:  0 0 100px rgba(249, 115, 22, 0.24);
+}
+
+/* ── Global typography ── */
+body {
+  font-family: var(--petclinic-font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--petclinic-font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 { font-weight: 700; }
+
+.navbar__title {
+  font-family: var(--petclinic-font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+}
+
+/* Long-form reading measure */
+article .markdown {
+  max-width: 70ch;
+}
+
+/* ── Homepage container neutralization ── */
+.docs-doc-id-index .theme-doc-markdown,
+.docs-doc-id-index article,
+.docs-doc-id-index .container,
+.docs-doc-id-index .row,
+.docs-doc-id-index .col {
+  max-width: none;
+  padding-inline: 0;
+  margin-inline: 0;
+}
+
+.docs-doc-id-index .theme-doc-sidebar-container {
+  display: none;
+}
+
+.docs-doc-id-index main.docMainContainer,
+.docs-doc-id-index .docMainContainer_gTbr {
+  width: 100%;
+  max-width: 100%;
+}
+
+.docs-doc-id-index .theme-doc-markdown > header:first-child:not([class]),
+.docs-doc-id-index article > header:first-child:not([class]) {
+  display: none;
+}
+
+/* ── Sidebar ── */
+.menu__link {
+  font-weight: 400;
+}
+
+.menu__link--active {
+  font-weight: 600;
+}
+
+/* ── Code blocks ── */
+.prism-code {
+  font-family: var(--petclinic-font-mono) !important;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* ── Admonitions ── */
+.admonition {
+  border-radius: 8px;
+}
+
+/* ── TOC ── */
+.table-of-contents__link {
+  font-size: 0.85rem;
+}
+
+.table-of-contents__link--active {
+  color: var(--petclinic-primary);
+  font-weight: 600;
+}
+
+/* ── Focus ring ── */
+:focus-visible {
+  outline: 2px solid var(--petclinic-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── CTA buttons ── */
+.petclinic-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--petclinic-font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform var(--petclinic-duration-fast) var(--petclinic-ease-out),
+    box-shadow var(--petclinic-duration-base) var(--petclinic-ease-out),
+    background var(--petclinic-duration-base) var(--petclinic-ease-out),
+    border-color var(--petclinic-duration-base) var(--petclinic-ease-out),
+    color var(--petclinic-duration-base) var(--petclinic-ease-out);
+}
+
+.petclinic-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.petclinic-btn-primary {
+  padding: 0.8rem 1.75rem;
+  /* accent-dark, not accent: white text on the base accent is only 3.56:1,
+     below the 4.5:1 body-text floor. accent-dark clears 5.18:1. */
+  background: var(--petclinic-accent-dark);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35), 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.petclinic-btn-primary:hover {
+  /* Brighten via filter rather than swapping to accent-light: a straight
+     background swap drops contrast to ~2.3:1. */
+  filter: brightness(1.08);
+  box-shadow: 0 6px 22px rgba(234, 88, 12, 0.45), 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.petclinic-btn-primary:active {
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.35);
+}
+
+.petclinic-btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 1.5px solid var(--petclinic-border-strong);
+  color: var(--petclinic-content);
+}
+
+.petclinic-btn-secondary:hover {
+  border-color: var(--petclinic-primary);
+  background: rgba(13, 148, 136, 0.06);
+  transform: translateY(-2px);
+}
+
+/* On the drenched dark-teal hero band, the secondary CTA needs light-on-dark
+   colors instead of the light-surface defaults above. */
+.petclinic-hero .petclinic-btn-secondary {
+  border-color: var(--petclinic-hero-border);
+  color: var(--petclinic-hero-ink);
+}
+
+.petclinic-hero .petclinic-btn-secondary:hover {
+  border-color: var(--petclinic-primary-light);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.petclinic-cta-arrow {
+  display: inline-block;
+  transition: transform var(--petclinic-duration-fast) var(--petclinic-ease-out);
+}
+
+.petclinic-btn:hover .petclinic-cta-arrow {
+  transform: translateX(3px);
+}
+
+/* ── Motion keyframes ── */
+@keyframes petclinic-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes petclinic-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes petclinic-glow-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.06); }
+}
+
+@keyframes petclinic-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+@keyframes petclinic-reveal-line {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Smooth scroll ── */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ── Selection ── */
+::selection {
+  background: rgba(13, 148, 136, 0.18);
+  color: #134E4A;
+}
+
+[data-theme='dark'] ::selection {
+  background: rgba(45, 212, 191, 0.22);
+  color: #CCFBF1;
+}

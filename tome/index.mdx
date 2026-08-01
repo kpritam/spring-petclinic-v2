@@ -1,0 +1,34 @@
+---
+slug: /
+sidebar_position: -1000
+hide_table_of_contents: true
+hide_title: true
+---
+
+import Head from '@docusaurus/Head';
+import Hero from './site/src/components/Hero';
+import FeatureGrid from './site/src/components/FeatureGrid';
+import Quickstart from './site/src/components/Quickstart';
+import NavCards from './site/src/components/NavCards';
+
+<Head>
+  <title>Spring PetClinic — Spring Boot demo app</title>
+  <meta name="description" content="A fully-wired Spring Boot application demonstrating owners, pets, visits, and vet scheduling. Runs on H2, MySQL, or PostgreSQL. Container-ready." />
+</Head>
+
+<div style={{
+  width: '100vw',
+  maxWidth: '100vw',
+  marginInline: 'calc(50% - 50vw)',
+  overflow: 'hidden',
+}}>
+
+<Hero />
+
+<FeatureGrid />
+
+<Quickstart />
+
+<NavCards />
+
+</div>

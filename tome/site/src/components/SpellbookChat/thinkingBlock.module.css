@@ -1,0 +1,117 @@
+/**
+ * Every color here is a `--grim-*` token (or its Infima fallback) — none of
+ * them are hardcoded oklch() literals, so unlike most of styles.module.css
+ * this file needs no `[data-theme="light"]` override block: the tokens
+ * already resolve correctly in both themes.
+ */
+
+.block {
+  margin-bottom: var(--grim-space-sm, 0.75rem);
+  padding-bottom: var(--grim-space-xs, 0.5rem);
+  border-bottom: 1px solid var(--grim-rule, var(--ifm-color-emphasis-300));
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--grim-space-2xs, 0.25rem);
+  width: 100%;
+  margin: 0;
+  padding: var(--grim-space-2xs, 0.25rem) 0;
+  background: none;
+  border: none;
+  color: var(--grim-text-subtle, var(--ifm-color-emphasis-600));
+  font-family: var(--grim-font-chat, var(--ifm-font-family-base));
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--grim-violet, var(--ifm-color-primary));
+  outline-offset: 2px;
+  border-radius: var(--grim-radius-sm, 6px);
+}
+
+.icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.label {
+  flex: 1 1 auto;
+}
+
+/* Breathing-opacity indicator while reasoning streams in. Deliberately not
+   a gradient-sweep/shimmer: this design system treats animated gradient
+   text as decorative-only, so activity is signalled the same way the
+   existing `.typingDots` bubble indicator does — staggered opacity, same
+   easing token — rather than inventing a second convention. */
+.label[data-pulse="true"] {
+  animation: thinkingPulse 1.6s var(--grim-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1)) infinite;
+}
+
+@keyframes thinkingPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.chevronWrap {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  transition: transform var(--grim-dur-fast, 120ms) var(--grim-ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.chevronWrap[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* Height animation via grid-template-rows (0fr -> 1fr) instead of
+   max-height or a measured scrollHeight — no JS measurement, no snapping,
+   no layout jank when the reasoning text reflows mid-stream. */
+.contentWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--grim-dur-med, 220ms) var(--grim-ease-out-quart, cubic-bezier(0.25, 1, 0.5, 1));
+}
+
+.contentWrap[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.contentInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.contentText {
+  padding-top: var(--grim-space-2xs, 0.25rem);
+  color: var(--grim-text-muted, var(--ifm-color-emphasis-700));
+  font-family: var(--grim-font-chat, var(--ifm-font-family-base));
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevronWrap,
+  .contentWrap {
+    transition: none;
+  }
+
+  .label[data-pulse="true"] {
+    animation: none;
+    opacity: 0.85;
+  }
+}

@@ -1,0 +1,1046 @@
+[
+  {
+    "id": "concepts/domain-model.md#domain-model-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model"
+    ],
+    "text": "Spring PetClinic models a veterinary clinic with five entity types. This page explains their relationships, JPA mapping decisions, and the constraints that shape application behaviour.",
+    "anchor": "domain-model",
+    "sourceLink": "/concepts/domain-model",
+    "tokens": 46
+  },
+  {
+    "id": "concepts/domain-model.md#entity-hierarchy-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "Entity hierarchy"
+    ],
+    "text": "All entities extend `BaseEntity` (provides the `id` field). Named entities (those with a `name` field) extend `NamedEntity`. People extend `Person` (adds `firstName`, `lastName`).",
+    "anchor": "entity-hierarchy",
+    "sourceLink": "/concepts/domain-model#entity-hierarchy",
+    "tokens": 45
+  },
+  {
+    "id": "concepts/domain-model.md#entity-hierarchy-1",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "Entity hierarchy"
+    ],
+    "text": "```mermaid\n%%{init: {'theme':'base','themeVariables':{'primaryColor':'#6ea6d6','primaryTextColor':'#1a1a1a','primaryBorderColor':'#4a86bb','lineColor':'#4a86bb','secondaryColor':'#e8f0fa','tertiaryColor':'#f5f8fd','background':'#ffffff','mainBkg':'#e8f0fa'}}}%%\nclassDiagram\n    class BaseEntity {\n        +Integer id\n    }\n    class NamedEntity {\n        +String name\n    }\n    class Person {\n        +String firstName\n        +String lastName\n    }\n    class Owner {\n        +String address\n        +String city\n        +String telephone\n        +List~Pet~ pets\n    }\n    class Pet {\n        +String name\n        +LocalDate birthDate\n        +PetType type\n        +List~Visit~ visits\n    }\n    class Visit {\n        +LocalDate date\n        +String description\n    }\n    class Vet {\n        +Set~Specialty~ specialties\n    }\n    class PetType {\n        +String name\n    }\n    class Specialty {\n        +String name\n    }\n\n    BaseEntity <|-- NamedEntity\n    BaseEntity <|-- Person\n    NamedEntity <|-- PetType\n    NamedEntity <|-- Specialty\n    Person <|-- Owner\n    Person <|-- Vet\n    Owner \"1\" --> \"0..*\" Pet : owns\n    Pet \"1\" --> \"0..*\" Visit : has\n    Pet \"*\" --> \"1\" PetType : is of\n    Vet \"*\" --> \"*\" Specialty : has\n```",
+    "anchor": "entity-hierarchy",
+    "sourceLink": "/concepts/domain-model#entity-hierarchy",
+    "tokens": 308
+  },
+  {
+    "id": "concepts/domain-model.md#database-schema-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "Database schema"
+    ],
+    "text": "The schema lives at `src/main/resources/db/h2/schema.sql` (and equivalents for MySQL and PostgreSQL). Key tables:\n\n| Table | Maps to | Notes |\n|-------|---------|-------|\n| `owners` | `Owner` | `last_name` is `VARCHAR_IGNORECASE` in H2 |\n| `pets` | `Pet` | FK to `owners`, FK to `types` |\n| `types` | `PetType` | Read-only lookup; not editable via UI |\n| `visits` | `Visit` | FK to `pets` |\n| `vets` | `Vet` | — |\n| `specialties` | `Specialty` | — |\n| `vet_specialties` | — | Many-to-many join table |",
+    "anchor": "database-schema",
+    "sourceLink": "/concepts/domain-model#database-schema",
+    "tokens": 126
+  },
+  {
+    "id": "concepts/domain-model.md#eager-loading-of-pets-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "JPA mapping decisions",
+      "Eager loading of pets"
+    ],
+    "text": "`Owner.pets` uses `@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)`. The owner detail page renders all pets and their visits in a single view — eager loading ensures everything is available without additional queries after the session closes (`spring.jpa.open-in-view=false`).",
+    "anchor": "eager-loading-of-pets",
+    "sourceLink": "/concepts/domain-model#eager-loading-of-pets",
+    "tokens": 73
+  },
+  {
+    "id": "concepts/domain-model.md#owner-as-aggregate-root-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "JPA mapping decisions",
+      "Owner as aggregate root"
+    ],
+    "text": "Pets and visits are only ever modified through their owning `Owner`. `PetController` and `VisitController` both load `Owner` first, mutate its collections, then call `owners.saveAndFlush(owner)`. This keeps `Owner` as the aggregate root and avoids detached-entity problems.",
+    "anchor": "owner-as-aggregate-root",
+    "sourceLink": "/concepts/domain-model#owner-as-aggregate-root",
+    "tokens": 69
+  },
+  {
+    "id": "concepts/domain-model.md#unique-pet-names-per-owner-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "JPA mapping decisions",
+      "Unique pet names per owner"
+    ],
+    "text": "The `pets` table has a unique constraint:\n\n```sql\nALTER TABLE pets ADD CONSTRAINT unique_owner_pet_name UNIQUE (owner_id, name);\n```\n\n`PetController` checks for duplicates at the application level first (via `owner.getPet(name, true)`), but also catches `DataIntegrityViolationException` in case of a race condition, checking that the exception message contains `unique_owner_pet_name` before rejecting the \"name\" field.",
+    "anchor": "unique-pet-names-per-owner",
+    "sourceLink": "/concepts/domain-model#unique-pet-names-per-owner",
+    "tokens": 105
+  },
+  {
+    "id": "concepts/domain-model.md#snake-case-column-mapping-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "JPA mapping decisions",
+      "Snake-case column mapping"
+    ],
+    "text": "`spring.jpa.hibernate.naming.physical-strategy=PhysicalNamingStrategySnakeCaseImpl` maps Java camelCase fields to snake_case columns automatically — `birthDate` → `birth_date`, `firstName` → `first_name`, etc.",
+    "anchor": "snake-case-column-mapping",
+    "sourceLink": "/concepts/domain-model#snake-case-column-mapping",
+    "tokens": 53
+  },
+  {
+    "id": "concepts/domain-model.md#batch-fetch-size-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "JPA mapping decisions",
+      "Batch fetch size"
+    ],
+    "text": "`spring.jpa.properties.hibernate.default_batch_fetch_size=16` batches collection fetches, reducing the number of SQL queries when multiple `Owner` records are loaded in a list view.",
+    "anchor": "batch-fetch-size",
+    "sourceLink": "/concepts/domain-model#batch-fetch-size",
+    "tokens": 46
+  },
+  {
+    "id": "concepts/domain-model.md#see-also-0",
+    "file": "concepts/domain-model.md",
+    "headings": [
+      "Domain Model",
+      "See also"
+    ],
+    "text": "- [Request Flow and Spring MVC Patterns](./request-flow) — how controllers use these entities\n- [HTTP Routes](../reference/routes) — URL structure reflecting the entity hierarchy",
+    "anchor": "see-also",
+    "sourceLink": "/concepts/domain-model#see-also",
+    "tokens": 45
+  },
+  {
+    "id": "concepts/request-flow.md#request-flow-and-spring-mvc-patterns-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns"
+    ],
+    "text": "This page traces a complete HTTP request through Spring PetClinic, from the browser to the database and back, and explains the Spring MVC patterns used throughout.",
+    "anchor": "request-flow-and-spring-mvc-patterns",
+    "sourceLink": "/concepts/request-flow",
+    "tokens": 41
+  },
+  {
+    "id": "concepts/request-flow.md#end-to-end-request-trace-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "End-to-end request trace"
+    ],
+    "text": "The sequence below follows a `POST /owners/{ownerId}/pets/new` request (adding a pet) through every layer:",
+    "anchor": "end-to-end-request-trace",
+    "sourceLink": "/concepts/request-flow#end-to-end-request-trace",
+    "tokens": 27
+  },
+  {
+    "id": "concepts/request-flow.md#end-to-end-request-trace-1",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "End-to-end request trace"
+    ],
+    "text": "```mermaid\n%%{init: {'theme':'base','themeVariables':{'primaryColor':'#6ea6d6','primaryTextColor':'#1a1a1a','primaryBorderColor':'#4a86bb','lineColor':'#4a86bb','secondaryColor':'#e8f0fa','tertiaryColor':'#f5f8fd','background':'#ffffff','mainBkg':'#ffffff'}}}%%\nsequenceDiagram\n    participant Browser\n    participant DispatcherServlet\n    participant LocaleChangeInterceptor\n    participant PetController\n    participant OwnerRepository\n    participant Database\n    participant ThymeleafEngine\n\n    Browser->>DispatcherServlet: POST /owners/3/pets/new\n    DispatcherServlet->>LocaleChangeInterceptor: preHandle (check ?lang=)\n    LocaleChangeInterceptor-->>DispatcherServlet: ok\n    DispatcherServlet->>PetController: @ModelAttribute \"owner\" → findOwner(3)\n    PetController->>OwnerRepository: findById(3)\n    OwnerRepository->>Database: SELECT owner + pets (EAGER)\n    Database-->>OwnerRepository: Owner row + Pet rows\n    OwnerRepository-->>PetController: Owner\n    DispatcherServlet->>PetController: @ModelAttribute \"types\" → populatePetTypes()\n    PetController->>OwnerRepository: findPetTypes()\n    OwnerRepository->>Database: SELECT * FROM types\n    Database-->>OwnerRepository: PetType rows\n    OwnerRepository-->>PetController: Collection<PetType>\n    DispatcherServlet->>PetController: processCreationForm(owner, pet, result, ...)\n    PetController->>PetController: validate pet name uniqueness\n    PetController->>OwnerRepository: saveAndFlush(owner)\n    OwnerRepository->>Database: INSERT INTO pets\n    Database-->>OwnerRepository: ok\n    OwnerRepository-->>PetController: saved\n    PetController-->>DispatcherServlet: redirect:/owners/3\n    DispatcherServlet-->>Browser: HTTP 302 → /owners/3\n    Browser->>DispatcherServlet: GET /owners/3\n    DispatcherServlet->>PetController: showOwner(3) [OwnerController]\n    PetController->>OwnerRepository: findById(3)\n    OwnerRepository->>Database: SELECT owner + pets (EAGER)\n    Database-->>OwnerRepository: Owner + Pets + Visits\n    OwnerRepository-->>ThymeleafEngine: Owner model\n    ThymeleafEngine-->>Browser: ownerDetails.html\n```",
+    "anchor": "end-to-end-request-trace",
+    "sourceLink": "/concepts/request-flow#end-to-end-request-trace",
+    "tokens": 523
+  },
+  {
+    "id": "concepts/request-flow.md#modelattribute-pre-population-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "Key patterns",
+      "@ModelAttribute pre-population"
+    ],
+    "text": "Every handler method in `OwnerController` is preceded by `findOwner()`, annotated `@ModelAttribute(\"owner\")`. When a path variable `{ownerId}` is present, it loads the `Owner` from the database. When absent (create form), it returns a new empty `Owner`. This pattern avoids repeating the owner-loading logic in every handler.\n\n`PetController` does the same for both `owner` and `pet` model attributes, and additionally pre-populates the `types` list for the pet form dropdown.",
+    "anchor": "modelattribute-pre-population",
+    "sourceLink": "/concepts/request-flow#modelattribute-pre-population",
+    "tokens": 119
+  },
+  {
+    "id": "concepts/request-flow.md#initbinder-and-field-protection-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "Key patterns",
+      "@InitBinder and field protection"
+    ],
+    "text": "Both `OwnerController` and `PetController` register an `@InitBinder` that calls `setDisallowedFields(\"id\", \"*.id\")`. This prevents id fields from being bound from HTTP request parameters, closing a mass-assignment vector.\n\n`PetController` additionally registers `PetValidator` via `dataBinder.setValidator(new PetValidator())` for the `pet` model attribute, which validates that the pet name and type are provided.",
+    "anchor": "initbinder-and-field-protection",
+    "sourceLink": "/concepts/request-flow#initbinder-and-field-protection",
+    "tokens": 104
+  },
+  {
+    "id": "concepts/request-flow.md#prg-postredirectget-pattern-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "Key patterns",
+      "PRG (Post/Redirect/Get) pattern"
+    ],
+    "text": "Every successful POST handler redirects rather than rendering a view directly:\n\n```java\n// PetController.processCreationForm\nreturn \"redirect:/owners/{ownerId}\";\n```\n\n`RedirectAttributes.addFlashAttribute(...)` passes success messages across the redirect without polluting the URL. This prevents double-submission if the user presses the browser back button.",
+    "anchor": "prg-postredirectget-pattern",
+    "sourceLink": "/concepts/request-flow#prg-postredirectget-pattern",
+    "tokens": 90
+  },
+  {
+    "id": "concepts/request-flow.md#caching-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "Key patterns",
+      "Caching"
+    ],
+    "text": "`VetRepository` is annotated `@Cacheable(\"vets\")` on both `findAll()` overloads. The `vets` cache is created by `CacheConfiguration` using the JCache API backed by Caffeine, with statistics enabled via JMX (`setStatisticsEnabled(true)`). Vets are cached because the list is read frequently and changes rarely compared to owner and pet data.",
+    "anchor": "caching",
+    "sourceLink": "/concepts/request-flow#caching",
+    "tokens": 85
+  },
+  {
+    "id": "concepts/request-flow.md#internationalization-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "Key patterns",
+      "Internationalization"
+    ],
+    "text": "`WebConfiguration` registers two beans:\n\n- `SessionLocaleResolver` — stores the user's locale in the HTTP session; defaults to `Locale.ENGLISH`.\n- `LocaleChangeInterceptor` — runs on every request and checks for a `lang` query parameter. If present, it updates the session locale. This is why `?lang=de` on any URL switches the entire UI to German immediately.\n\nMessages are loaded from `src/main/resources/messages/messages_{lang}.properties`. Eleven locale files are present.",
+    "anchor": "internationalization",
+    "sourceLink": "/concepts/request-flow#internationalization",
+    "tokens": 120
+  },
+  {
+    "id": "concepts/request-flow.md#error-handling-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "Key patterns",
+      "Error handling"
+    ],
+    "text": "`CrashController` at `/oups` deliberately throws `RuntimeException`. Spring Boot's auto-configured error handling catches it and renders `src/main/resources/templates/error.html` via `BasicErrorController`. This route exists solely to demonstrate the error page.",
+    "anchor": "error-handling",
+    "sourceLink": "/concepts/request-flow#error-handling",
+    "tokens": 66
+  },
+  {
+    "id": "concepts/request-flow.md#see-also-0",
+    "file": "concepts/request-flow.md",
+    "headings": [
+      "Request Flow and Spring MVC Patterns",
+      "See also"
+    ],
+    "text": "- [Domain Model](./domain-model) — entity types used in this flow\n- [HTTP Routes](../reference/routes) — all routes and their handlers\n- [Configuration Properties](../reference/configuration) — i18n and caching configuration",
+    "anchor": "see-also",
+    "sourceLink": "/concepts/request-flow#see-also",
+    "tokens": 56
+  },
+  {
+    "id": "getting-started.md#getting-started-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started"
+    ],
+    "text": "Run Spring PetClinic locally in a single command. No database setup required — the default configuration uses an H2 in-memory database with seed data loaded automatically.",
+    "anchor": "getting-started",
+    "sourceLink": "/getting-started",
+    "tokens": 43
+  },
+  {
+    "id": "getting-started.md#prerequisites-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started",
+      "Prerequisites"
+    ],
+    "text": "- Java 17 or later. Check with `java -version`.\n- The Maven wrapper (`mvnw`) is included in the repository; no separate Maven install is needed.",
+    "anchor": "prerequisites",
+    "sourceLink": "/getting-started#prerequisites",
+    "tokens": 36
+  },
+  {
+    "id": "getting-started.md#run-the-application-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started",
+      "Run the application"
+    ],
+    "text": "```bash\n./mvnw spring-boot:run\n```\n\nThe first run downloads dependencies. Once you see output like:\n\n```\nStarted PetClinicApplication in X.XXX seconds\n```\n\nopen http://localhost:8080 in your browser.",
+    "anchor": "run-the-application",
+    "sourceLink": "/getting-started#run-the-application",
+    "tokens": 50
+  },
+  {
+    "id": "getting-started.md#verify-it-works-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started",
+      "Verify it works"
+    ],
+    "text": "1. The welcome page loads with a Spring PetClinic banner.\n2. Click **Find owners** in the navigation — a list of pre-loaded owners appears.\n3. Click **Veterinarians** — a paginated list of vets with their specialties appears.\n\nThe seed data comes from `src/main/resources/db/h2/data.sql` and is loaded fresh on every start because H2 runs in memory.",
+    "anchor": "verify-it-works",
+    "sourceLink": "/getting-started#verify-it-works",
+    "tokens": 88
+  },
+  {
+    "id": "getting-started.md#what-you-just-ran-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started",
+      "What you just ran"
+    ],
+    "text": "`./mvnw spring-boot:run` starts an embedded Tomcat server on port 8080. The `database=h2` property in `application.properties` tells the app to run schema and data SQL from `src/main/resources/db/h2/`. All data is lost when the process stops — which is fine for exploration.",
+    "anchor": "what-you-just-ran",
+    "sourceLink": "/getting-started#what-you-just-ran",
+    "tokens": 69
+  },
+  {
+    "id": "getting-started.md#stop-the-application-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started",
+      "Stop the application"
+    ],
+    "text": "Press `Ctrl+C` in the terminal where the app is running.",
+    "anchor": "stop-the-application",
+    "sourceLink": "/getting-started#stop-the-application",
+    "tokens": 14
+  },
+  {
+    "id": "getting-started.md#next-steps-0",
+    "file": "getting-started.md",
+    "headings": [
+      "Getting Started",
+      "Next steps"
+    ],
+    "text": "- [Explore the App End to End](./tutorials/explore-the-app) — walk through owners, pets, and visits\n- [Switch to MySQL or PostgreSQL](./guides/switch-database) — persist data across restarts",
+    "anchor": "next-steps",
+    "sourceLink": "/getting-started#next-steps",
+    "tokens": 48
+  },
+  {
+    "id": "guides/build-container-image.md#build-a-container-image-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image"
+    ],
+    "text": "Spring PetClinic uses the Spring Boot Maven plugin's Paketo Buildpacks integration to produce an OCI-compatible container image. No `Dockerfile` is needed.",
+    "anchor": "build-a-container-image",
+    "sourceLink": "/guides/build-container-image",
+    "tokens": 39
+  },
+  {
+    "id": "guides/build-container-image.md#prerequisites-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image",
+      "Prerequisites"
+    ],
+    "text": "- Docker running locally (`docker info` succeeds)\n- Java 17+ (`java -version`)",
+    "anchor": "prerequisites",
+    "sourceLink": "/guides/build-container-image#prerequisites",
+    "tokens": 20
+  },
+  {
+    "id": "guides/build-container-image.md#build-the-image-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image",
+      "Build the image"
+    ],
+    "text": "```bash\n./mvnw spring-boot:build-image\n```\n\nWith Gradle:\n\n```bash\n./gradlew bootBuildImage\n```\n\nThe plugin pulls Paketo builder and run images on first use. The resulting image is tagged `spring-petclinic:4.0.0-SNAPSHOT` (from the `artifactId` and `version` in `pom.xml`).",
+    "anchor": "build-the-image",
+    "sourceLink": "/guides/build-container-image#build-the-image",
+    "tokens": 68
+  },
+  {
+    "id": "guides/build-container-image.md#override-the-image-name-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image",
+      "Override the image name"
+    ],
+    "text": "```bash\n./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=myregistry/petclinic:latest\n```",
+    "anchor": "override-the-image-name",
+    "sourceLink": "/guides/build-container-image#override-the-image-name",
+    "tokens": 27
+  },
+  {
+    "id": "guides/build-container-image.md#run-the-image-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image",
+      "Run the image"
+    ],
+    "text": "```bash\ndocker run -p 8080:8080 spring-petclinic:4.0.0-SNAPSHOT\n```\n\nOpen http://localhost:8080. The default H2 profile runs inside the container.",
+    "anchor": "run-the-image",
+    "sourceLink": "/guides/build-container-image#run-the-image",
+    "tokens": 37
+  },
+  {
+    "id": "guides/build-container-image.md#pass-a-spring-profile-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image",
+      "Pass a Spring profile"
+    ],
+    "text": "```bash\ndocker run \\\n  -e SPRING_PROFILES_ACTIVE=postgres \\\n  -e POSTGRES_URL=jdbc:postgresql://host.docker.internal/petclinic \\\n  -e POSTGRES_USER=petclinic \\\n  -e POSTGRES_PASS=petclinic \\\n  -p 8080:8080 \\\n  spring-petclinic:4.0.0-SNAPSHOT\n```\n\n`host.docker.internal` resolves to the Docker host on macOS and Windows; on Linux use the host's actual IP or a Docker network.",
+    "anchor": "pass-a-spring-profile",
+    "sourceLink": "/guides/build-container-image#pass-a-spring-profile",
+    "tokens": 94
+  },
+  {
+    "id": "guides/build-container-image.md#see-also-0",
+    "file": "guides/build-container-image.md",
+    "headings": [
+      "Build a Container Image",
+      "See also"
+    ],
+    "text": "- [Deploy to Kubernetes](./deploy-kubernetes) — use this image in a cluster",
+    "anchor": "see-also",
+    "sourceLink": "/guides/build-container-image#see-also",
+    "tokens": 19
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#deploy-to-kubernetes-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes"
+    ],
+    "text": "The repository ships Kubernetes manifests in `k8s/`. They deploy the application alongside a PostgreSQL instance connected via the [Service Binding specification](https://servicebinding.io/).",
+    "anchor": "deploy-to-kubernetes",
+    "sourceLink": "/guides/deploy-kubernetes",
+    "tokens": 48
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#prerequisites-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "Prerequisites"
+    ],
+    "text": "- A running Kubernetes cluster (minikube, kind, or a cloud provider)\n- `kubectl` configured to target it\n- A container image pushed to a registry your cluster can reach (see [Build a Container Image](./build-container-image))",
+    "anchor": "prerequisites",
+    "sourceLink": "/guides/deploy-kubernetes#prerequisites",
+    "tokens": 57
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#step-1--deploy-the-database-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "Step 1 — Deploy the database"
+    ],
+    "text": "```bash\nkubectl apply -f k8s/db.yml\n```\n\n`k8s/db.yml` creates:\n- A `Secret` named `demo-db` of type `servicebinding.io/postgresql` holding host, port, database, username, and password.\n- A `Deployment` running `postgres:18.4`, with credentials drawn from the same secret.\n- A `Service` named `demo-db` exposing port 5432.",
+    "anchor": "step-1--deploy-the-database",
+    "sourceLink": "/guides/deploy-kubernetes#step-1--deploy-the-database",
+    "tokens": 81
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#step-2--update-the-image-name-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "Step 2 — Update the image name"
+    ],
+    "text": "Edit `k8s/petclinic.yml` and replace `dsyer/petclinic` (the default placeholder) with your image reference:\n\n```yaml\ncontainers:\n  - name: workload\n    image: myregistry/petclinic:latest   # <- change this\n```",
+    "anchor": "step-2--update-the-image-name",
+    "sourceLink": "/guides/deploy-kubernetes#step-2--update-the-image-name",
+    "tokens": 53
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#step-3--deploy-the-application-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "Step 3 — Deploy the application"
+    ],
+    "text": "```bash\nkubectl apply -f k8s/petclinic.yml\n```\n\n`k8s/petclinic.yml` creates:\n- A `Service` of type `NodePort` named `petclinic` on port 80 → 8080.\n- A `Deployment` with:\n  - `SPRING_PROFILES_ACTIVE=postgres`\n  - `SERVICE_BINDING_ROOT=/bindings` — tells Spring Cloud Bindings where to read the secret\n  - `SPRING_APPLICATION_JSON` enabling `management.endpoint.health.probes.add-additional-paths: true` so `/livez` and `/readyz` work for liveness and readiness probes\n  - A `volumeMount` at `/bindings/secret` projecting the `demo-db` secret",
+    "anchor": "step-3--deploy-the-application",
+    "sourceLink": "/guides/deploy-kubernetes#step-3--deploy-the-application",
+    "tokens": 135
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#step-4--access-the-application-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "Step 4 — Access the application"
+    ],
+    "text": "```bash\n# minikube\nminikube service petclinic --url\n\n# kind / cloud — check the NodePort\nkubectl get svc petclinic\n```\n\nOpen the URL in your browser.",
+    "anchor": "step-4--access-the-application",
+    "sourceLink": "/guides/deploy-kubernetes#step-4--access-the-application",
+    "tokens": 38
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#health-probes-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "Health probes"
+    ],
+    "text": "The deployment configures:\n\n| Probe | Path |\n|-------|------|\n| Liveness | `/livez` |\n| Readiness | `/readyz` |\n\nThese paths are activated by `management.endpoint.health.probes.add-additional-paths: true` passed via `SPRING_APPLICATION_JSON`.",
+    "anchor": "health-probes",
+    "sourceLink": "/guides/deploy-kubernetes#health-probes",
+    "tokens": 61
+  },
+  {
+    "id": "guides/deploy-kubernetes.md#see-also-0",
+    "file": "guides/deploy-kubernetes.md",
+    "headings": [
+      "Deploy to Kubernetes",
+      "See also"
+    ],
+    "text": "- [Build a Container Image](./build-container-image) — produce the image used here\n- [Configuration Properties](../reference/configuration) — environment variable reference",
+    "anchor": "see-also",
+    "sourceLink": "/guides/deploy-kubernetes#see-also",
+    "tokens": 43
+  },
+  {
+    "id": "guides/run-tests.md#run-the-test-suite-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite"
+    ],
+    "text": "Spring PetClinic has three tiers of tests: MockMvc slice tests, a full H2 integration test, and database-specific integration tests that spin up real MySQL and PostgreSQL containers via TestContainers.",
+    "anchor": "run-the-test-suite",
+    "sourceLink": "/guides/run-tests",
+    "tokens": 51
+  },
+  {
+    "id": "guides/run-tests.md#run-everything-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "Run everything"
+    ],
+    "text": "```bash\n./mvnw verify\n```\n\nThis runs all tests, Checkstyle, Spring Java Format checks, and generates a JaCoCo coverage report.",
+    "anchor": "run-everything",
+    "sourceLink": "/guides/run-tests#run-everything",
+    "tokens": 32
+  },
+  {
+    "id": "guides/run-tests.md#run-just-unit-and-slice-tests-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "Run just unit and slice tests"
+    ],
+    "text": "```bash\n./mvnw test\n```\n\n`mvn test` runs the Surefire plugin (unit tests). `mvn verify` additionally runs Failsafe (integration tests tagged with `@SpringBootTest`).",
+    "anchor": "run-just-unit-and-slice-tests",
+    "sourceLink": "/guides/run-tests#run-just-unit-and-slice-tests",
+    "tokens": 42
+  },
+  {
+    "id": "guides/run-tests.md#test-types-in-the-codebase-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "Test types in the codebase"
+    ],
+    "text": "| Class | Type | Database |\n|-------|------|----------|\n| `OwnerControllerTests` | MockMvc slice (`@WebMvcTest`) | none (mocked) |\n| `PetControllerTests` | MockMvc slice (`@WebMvcTest`) | none (mocked) |\n| `VisitControllerTests` | MockMvc slice (`@WebMvcTest`) | none (mocked) |\n| `VetControllerTests` | MockMvc slice (`@WebMvcTest`) | none (mocked) |\n| `PetValidatorTests` | Unit | none |\n| `PetTypeFormatterTests` | Unit | none |\n| `ValidatorTests` | Unit (Bean Validation) | none |\n| `WelcomeControllerTests` | MockMvc slice | none (mocked) |\n| `CrashControllerTests` | MockMvc slice | none (mocked) |\n| `PetClinicIntegrationTests` | Full integration (`@SpringBootTest`) | H2 |\n| `MySqlIntegrationTests` | Full integration | MySQL (TestContainers) |\n| `PostgresIntegrationTests` | Full integration | PostgreSQL (Docker Compose) |\n| `PetClinicConcurrencyTests` | Concurrency | H2 |",
+    "anchor": "test-types-in-the-codebase",
+    "sourceLink": "/guides/run-tests#test-types-in-the-codebase",
+    "tokens": 221
+  },
+  {
+    "id": "guides/run-tests.md#test-types-in-the-codebase-1",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "Test types in the codebase"
+    ],
+    "text": "`MySqlIntegrationTests` uses TestContainers to start a MySQL container automatically — no local MySQL installation needed. `PostgresIntegrationTests` uses Spring Boot's Docker Compose support.",
+    "anchor": "test-types-in-the-codebase",
+    "sourceLink": "/guides/run-tests#test-types-in-the-codebase",
+    "tokens": 48
+  },
+  {
+    "id": "guides/run-tests.md#run-a-single-test-class-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "Run a single test class"
+    ],
+    "text": "```bash\n./mvnw test -Dtest=OwnerControllerTests\n```",
+    "anchor": "run-a-single-test-class",
+    "sourceLink": "/guides/run-tests#run-a-single-test-class",
+    "tokens": 13
+  },
+  {
+    "id": "guides/run-tests.md#coverage-report-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "Coverage report"
+    ],
+    "text": "After `./mvnw verify`, the JaCoCo HTML report is at:\n\n```\ntarget/site/jacoco/index.html\n```\n\nOpen it in a browser to see line and branch coverage per class.",
+    "anchor": "coverage-report",
+    "sourceLink": "/guides/run-tests#coverage-report",
+    "tokens": 39
+  },
+  {
+    "id": "guides/run-tests.md#see-also-0",
+    "file": "guides/run-tests.md",
+    "headings": [
+      "Run the Test Suite",
+      "See also"
+    ],
+    "text": "- [Domain Model](../concepts/domain-model) — the entities under test",
+    "anchor": "see-also",
+    "sourceLink": "/guides/run-tests#see-also",
+    "tokens": 17
+  },
+  {
+    "id": "guides/switch-database.md#switch-to-mysql-or-postgresql-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL"
+    ],
+    "text": "By default Spring PetClinic runs against H2 in memory. To persist data across restarts, switch to MySQL or PostgreSQL using Docker Compose and a Spring profile.",
+    "anchor": "switch-to-mysql-or-postgresql",
+    "sourceLink": "/guides/switch-database",
+    "tokens": 40
+  },
+  {
+    "id": "guides/switch-database.md#start-the-database-container-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL",
+      "Start the database container"
+    ],
+    "text": "The repository ships a `docker-compose.yml` at the repo root with two services:\n\n```bash\n# MySQL 9.7 on port 3306\ndocker compose up mysql -d\n\n# — or —\n\n# PostgreSQL 18.4 on port 5432\ndocker compose up postgres -d\n```\n\nBoth services pre-create a `petclinic` database with username and password `petclinic`.",
+    "anchor": "start-the-database-container",
+    "sourceLink": "/guides/switch-database#start-the-database-container",
+    "tokens": 77
+  },
+  {
+    "id": "guides/switch-database.md#run-the-application-with-the-profile-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL",
+      "Run the application with the profile"
+    ],
+    "text": "```bash\n# MySQL\nSPRING_PROFILES_ACTIVE=mysql ./mvnw spring-boot:run\n\n# PostgreSQL\nSPRING_PROFILES_ACTIVE=postgres ./mvnw spring-boot:run\n```\n\nWith Gradle:\n\n```bash\nSPRING_PROFILES_ACTIVE=mysql ./gradlew bootRun\n```\n\nSpring Boot applies `application-mysql.properties` (or `application-postgres.properties`) on top of `application.properties`. Schema and data SQL are re-run on each startup because `spring.sql.init.mode=always` is set in both profile files — the SQL is idempotent.",
+    "anchor": "run-the-application-with-the-profile",
+    "sourceLink": "/guides/switch-database#run-the-application-with-the-profile",
+    "tokens": 120
+  },
+  {
+    "id": "guides/switch-database.md#override-connection-details-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL",
+      "Override connection details"
+    ],
+    "text": "The profile files use environment variables with defaults:\n\n| Profile | Variable | Default |\n|---------|----------|---------|\n| `mysql` | `MYSQL_URL` | `jdbc:mysql://localhost/petclinic` |\n| `mysql` | `MYSQL_USER` | `petclinic` |\n| `mysql` | `MYSQL_PASS` | `petclinic` |\n| `postgres` | `POSTGRES_URL` | `jdbc:postgresql://localhost/petclinic` |\n| `postgres` | `POSTGRES_USER` | `petclinic` |\n| `postgres` | `POSTGRES_PASS` | `petclinic` |\n\nTo point at an external database:\n\n```bash\nSPRING_PROFILES_ACTIVE=mysql \\\nMYSQL_URL=jdbc:mysql://db.example.com/petclinic \\\nMYSQL_USER=myuser \\\nMYSQL_PASS=mypass \\\n./mvnw spring-boot:run\n```",
+    "anchor": "override-connection-details",
+    "sourceLink": "/guides/switch-database#override-connection-details",
+    "tokens": 158
+  },
+  {
+    "id": "guides/switch-database.md#verify-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL",
+      "Verify"
+    ],
+    "text": "Open http://localhost:8080. Data you create now persists — restart the app and the owners you added are still there.",
+    "anchor": "verify",
+    "sourceLink": "/guides/switch-database#verify",
+    "tokens": 29
+  },
+  {
+    "id": "guides/switch-database.md#teardown-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL",
+      "Teardown"
+    ],
+    "text": "```bash\ndocker compose down\n```\n\nThis stops and removes the containers. Data is lost unless you added a named volume to the compose file.",
+    "anchor": "teardown",
+    "sourceLink": "/guides/switch-database#teardown",
+    "tokens": 35
+  },
+  {
+    "id": "guides/switch-database.md#see-also-0",
+    "file": "guides/switch-database.md",
+    "headings": [
+      "Switch to MySQL or PostgreSQL",
+      "See also"
+    ],
+    "text": "- [Configuration Properties](../reference/configuration) — full property reference\n- [Deploy to Kubernetes](./deploy-kubernetes) — run in a cluster with a managed database",
+    "anchor": "see-also",
+    "sourceLink": "/guides/switch-database#see-also",
+    "tokens": 43
+  },
+  {
+    "id": "index.mdx#preamble-0",
+    "file": "index.mdx",
+    "headings": [],
+    "text": "import Head from '@docusaurus/Head';\nimport TerminalMockup from './site/src/components/TerminalMockup';\nimport FeatureGrid from './site/src/components/FeatureGrid';\nimport Quickstart from './site/src/components/Quickstart';\nimport NavCards from './site/src/components/NavCards';\n\n<Head>\n  <title>Spring PetClinic — Spring Boot demo app</title>\n  <meta name=\"description\" content=\"A fully-wired Spring Boot application demonstrating owners, pets, visits, and vet scheduling. Runs on H2, MySQL, or PostgreSQL. Container-ready.\" />\n</Head>\n\n<div style={{\n  width: '100vw',\n  maxWidth: '100vw',\n  marginInline: 'calc(50% - 50vw)',\n  overflow: 'hidden',\n}}>",
+    "anchor": "preamble",
+    "sourceLink": "/",
+    "tokens": 163
+  },
+  {
+    "id": "index.mdx#preamble-1",
+    "file": "index.mdx",
+    "headings": [],
+    "text": "{/* ── Hero section ── */}\n<section style={{\n  position: 'relative',\n  overflow: 'hidden',\n  background: 'var(--petclinic-bg-gradient)',\n  width: '100%',\n  paddingTop: 'clamp(4rem, 8vw, 7rem)',\n  paddingBottom: 'clamp(3rem, 6vw, 5rem)',\n  paddingInline: 'clamp(1rem, 4vw, 4rem)',\n}}>\n  <div aria-hidden=\"true\" style={{\n    position: 'absolute', top: '-80px', left: '10%',\n    width: '500px', height: '500px', borderRadius: '50%', pointerEvents: 'none',\n    background: 'radial-gradient(circle, rgba(13,148,136,0.14) 0%, transparent 70%)',\n  }} />\n  <div aria-hidden=\"true\" style={{\n    position: 'absolute', top: '10%', right: '5%',\n    width: '380px', height: '380px', borderRadius: '50%', pointerEvents: 'none',\n    background: 'radial-gradient(circle, rgba(234,88,12,0.10) 0%, transparent 70%)',\n  }} />",
+    "anchor": "preamble",
+    "sourceLink": "/",
+    "tokens": 202
+  },
+  {
+    "id": "index.mdx#preamble-2",
+    "file": "index.mdx",
+    "headings": [],
+    "text": "<div style={{\n    position: 'relative',\n    maxWidth: 'var(--petclinic-content-max, 72rem)',\n    marginInline: 'auto',\n    display: 'grid',\n    gridTemplateColumns: 'repeat(auto-fit, minmax(min(28rem, 100%), 1fr))',\n    gap: 'clamp(2rem, 5vw, 4rem)',\n    alignItems: 'center',\n  }}>\n    <div style={{\n      display: 'flex', flexDirection: 'column', gap: '1.25rem',\n      animation: 'petclinic-fade-up 360ms var(--petclinic-ease-out, cubic-bezier(0.16,1,0.3,1)) both',\n    }}>\n      <span style={{\n        alignSelf: 'flex-start',\n        display: 'inline-flex',\n        padding: '4px 14px', borderRadius: '20px',\n        fontSize: '0.78rem', fontWeight: 600,\n        background: 'rgba(13,148,136,0.10)',\n        color: 'var(--petclinic-primary, #0D9488)',\n        border: '1px solid var(--petclinic-border-strong, #5EEAD4)',\n        letterSpacing: '0.02em',\n        fontFamily: 'var(--petclinic-font-mono, ui-monospace, monospace)',\n      }}>Spring Boot · Thymeleaf · JPA</span>",
+    "anchor": "preamble",
+    "sourceLink": "/",
+    "tokens": 245
+  },
+  {
+    "id": "index.mdx#preamble-3",
+    "file": "index.mdx",
+    "headings": [],
+    "text": "<h1 style={{\n        fontFamily: 'var(--petclinic-font-display, Fredoka, system-ui, sans-serif)',\n        fontSize: 'clamp(2rem, 5vw, 3.25rem)',\n        fontWeight: 700,\n        lineHeight: 1.15,\n        letterSpacing: '-0.02em',\n        color: 'var(--petclinic-content, #134E4A)',\n        margin: 0,\n      }}>\n        Build confidence before you ship to production\n      </h1>\n\n<p style={{\n        fontSize: 'clamp(1rem, 2vw, 1.125rem)',\n        lineHeight: 1.65,\n        color: 'var(--petclinic-muted, #2D7A74)',\n        margin: 0,\n        maxWidth: '52ch',\n      }}>\n        A fully-wired Spring Boot application you can run, break, and learn from.\n        Multi-database, multi-language, and ready for containers.\n      </p>",
+    "anchor": "preamble",
+    "sourceLink": "/",
+    "tokens": 182
+  },
+  {
+    "id": "index.mdx#preamble-4",
+    "file": "index.mdx",
+    "headings": [],
+    "text": "<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>\n        <a href=\"/getting-started\" style={{\n          display: 'inline-flex', alignItems: 'center',\n          padding: '0.7rem 1.5rem', borderRadius: '8px',\n          background: 'var(--petclinic-accent, #EA580C)', color: '#fff',\n          fontFamily: 'var(--petclinic-font-display, Fredoka, system-ui, sans-serif)',\n          fontWeight: 600, fontSize: '1rem',\n          textDecoration: 'none', cursor: 'pointer',\n          boxShadow: '0 2px 8px rgba(234,88,12,0.25)',\n        }}>\n          Get started\n        </a>\n        <a href=\"/tutorials/explore-the-app\" style={{\n          display: 'inline-flex', alignItems: 'center',\n          padding: '0.65rem 1.25rem', borderRadius: '8px',\n          border: '1.5px solid var(--petclinic-border-strong, #5EEAD4)',\n          color: 'var(--petclinic-content, #134E4A)',\n          fontFamily: 'var(--petclinic-font-display, Fredoka, system-ui, sans-serif)',\n          fontWeight: 600, fontSize: '1rem',\n          textDecoration: 'none', cursor: 'pointer',\n          background: 'transparent',\n        }}>\n          Explore the app →\n        </a>\n      </div>\n    </div>",
+    "anchor": "preamble",
+    "sourceLink": "/",
+    "tokens": 300
+  },
+  {
+    "id": "index.mdx#preamble-5",
+    "file": "index.mdx",
+    "headings": [],
+    "text": "<div style={{ animation: 'petclinic-fade-up 480ms 80ms var(--petclinic-ease-out, cubic-bezier(0.16,1,0.3,1)) both' }}>\n      <TerminalMockup />\n    </div>\n  </div>\n</section>\n\n<FeatureGrid />\n\n<Quickstart />\n\n<NavCards />\n\n</div>",
+    "anchor": "preamble",
+    "sourceLink": "/",
+    "tokens": 58
+  },
+  {
+    "id": "reference/configuration.md#configuration-properties-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties"
+    ],
+    "text": "All configuration is in `src/main/resources/`. The active Spring profile selects which profile-specific file is overlaid on top of the defaults.",
+    "anchor": "configuration-properties",
+    "sourceLink": "/reference/configuration",
+    "tokens": 36
+  },
+  {
+    "id": "reference/configuration.md#default-properties-applicationproperties-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "Default properties (`application.properties`)"
+    ],
+    "text": "| Property | Value | Notes |\n|----------|-------|-------|\n| `database` | `h2` | Selects `db/${database}/schema.sql` and `data.sql` for initialization |\n| `spring.sql.init.schema-locations` | `classpath*:db/${database}/schema.sql` | Schema file path |\n| `spring.sql.init.data-locations` | `classpath*:db/${database}/data.sql` | Seed data file path |\n| `spring.thymeleaf.mode` | `HTML` | Thymeleaf template mode |\n| `spring.jpa.hibernate.ddl-auto` | `none` | DDL managed by `spring.sql.init`, not Hibernate |\n| `spring.jpa.open-in-view` | `false` | Disables open-session-in-view; all data must be loaded inside the transaction |\n| `spring.jpa.hibernate.naming.physical-strategy` | `PhysicalNamingStrategySnakeCaseImpl` | Maps camelCase fields to snake_case columns |\n| `spring.jpa.properties.hibernate.default_batch_fetch_size` | `16` | Batches collection fetches to reduce N+1 queries |\n| `spring.messages.basename` | `messages/messages` | i18n message bundle path |\n| `management.endpoints.web.exposure.include` | `*` | All Actuator endpoints exposed — **development only** |\n| `logging.level.org.springframework` | `INFO` | Spring framework log level |\n| `spring.web.resources.cache.cachecontrol.max-age` | `12h` | Browser cache duration for static resources |",
+    "anchor": "default-properties-applicationproperties",
+    "sourceLink": "/reference/configuration#default-properties-applicationproperties",
+    "tokens": 316
+  },
+  {
+    "id": "reference/configuration.md#default-properties-applicationproperties-1",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "Default properties (`application.properties`)"
+    ],
+    "text": "> **Warning:** `management.endpoints.web.exposure.include=*` exposes all Actuator endpoints including heap dumps and env variables. This is intentional for the demo; restrict it in production.",
+    "anchor": "default-properties-applicationproperties",
+    "sourceLink": "/reference/configuration#default-properties-applicationproperties",
+    "tokens": 48
+  },
+  {
+    "id": "reference/configuration.md#mysql-profile-application-mysqlproperties-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "MySQL profile (`application-mysql.properties`)"
+    ],
+    "text": "Activate with `SPRING_PROFILES_ACTIVE=mysql`.\n\n| Property | Default | Override via |\n|----------|---------|-------------|\n| `database` | `mysql` | — |\n| `spring.datasource.url` | `jdbc:mysql://localhost/petclinic` | `MYSQL_URL` env var |\n| `spring.datasource.username` | `petclinic` | `MYSQL_USER` env var |\n| `spring.datasource.password` | `petclinic` | `MYSQL_PASS` env var |\n| `spring.sql.init.mode` | `always` | — |",
+    "anchor": "mysql-profile-application-mysqlproperties",
+    "sourceLink": "/reference/configuration#mysql-profile-application-mysqlproperties",
+    "tokens": 105
+  },
+  {
+    "id": "reference/configuration.md#postgresql-profile-application-postgresproperties-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "PostgreSQL profile (`application-postgres.properties`)"
+    ],
+    "text": "Activate with `SPRING_PROFILES_ACTIVE=postgres`.\n\n| Property | Default | Override via |\n|----------|---------|-------------|\n| `database` | `postgres` | — |\n| `spring.datasource.url` | `jdbc:postgresql://localhost/petclinic` | `POSTGRES_URL` env var |\n| `spring.datasource.username` | `petclinic` | `POSTGRES_USER` env var |\n| `spring.datasource.password` | `petclinic` | `POSTGRES_PASS` env var |\n| `spring.sql.init.mode` | `always` | — |\n\n`spring.sql.init.mode=always` causes schema and data SQL to run on every startup. The SQL is written to be idempotent (H2 uses `DROP TABLE IF EXISTS`; MySQL and PostgreSQL use equivalent guards).",
+    "anchor": "postgresql-profile-application-postgresproperties",
+    "sourceLink": "/reference/configuration#postgresql-profile-application-postgresproperties",
+    "tokens": 159
+  },
+  {
+    "id": "reference/configuration.md#activating-a-profile-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "Activating a profile"
+    ],
+    "text": "```bash\n# Environment variable (recommended)\nSPRING_PROFILES_ACTIVE=mysql ./mvnw spring-boot:run\n\n# System property\n./mvnw spring-boot:run -Dspring.profiles.active=postgres\n\n# Multiple profiles\nSPRING_PROFILES_ACTIVE=mysql,actuator ./mvnw spring-boot:run\n```",
+    "anchor": "activating-a-profile",
+    "sourceLink": "/reference/configuration#activating-a-profile",
+    "tokens": 65
+  },
+  {
+    "id": "reference/configuration.md#actuator-endpoints-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "Actuator endpoints"
+    ],
+    "text": "With the default `management.endpoints.web.exposure.include=*`, the following are available at runtime:\n\n- `/actuator/health` — application health status\n- `/actuator/info` — build info\n- `/actuator/metrics` — Micrometer metrics\n- `/actuator/caches` — JCache statistics (includes `vets` cache hit rate)\n- `/h2-console` — H2 in-browser SQL console (H2 profile only, at `http://localhost:8080/h2-console`)",
+    "anchor": "actuator-endpoints",
+    "sourceLink": "/reference/configuration#actuator-endpoints",
+    "tokens": 101
+  },
+  {
+    "id": "reference/configuration.md#see-also-0",
+    "file": "reference/configuration.md",
+    "headings": [
+      "Configuration Properties",
+      "See also"
+    ],
+    "text": "- [Switch to MySQL or PostgreSQL](../guides/switch-database) — step-by-step database switching",
+    "anchor": "see-also",
+    "sourceLink": "/reference/configuration#see-also",
+    "tokens": 24
+  },
+  {
+    "id": "reference/routes.md#http-routes-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes"
+    ],
+    "text": "All routes are derived from `@GetMapping` and `@PostMapping` annotations in the five controllers.",
+    "anchor": "http-routes",
+    "sourceLink": "/reference/routes",
+    "tokens": 25
+  },
+  {
+    "id": "reference/routes.md#route-table-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "Route table"
+    ],
+    "text": "| Method | Path | Controller | Handler method | Response |\n|--------|------|------------|----------------|----------|\n| `GET` | `/` | `WelcomeController` | `welcome` | Thymeleaf `welcome.html` |\n| `GET` | `/owners/find` | `OwnerController` | `initFindForm` | Thymeleaf `owners/findOwners.html` |\n| `GET` | `/owners` | `OwnerController` | `processFindForm` | `owners/ownersList.html` or redirect to `/owners/{id}` if exactly one match |\n| `GET` | `/owners/new` | `OwnerController` | `initCreationForm` | Thymeleaf `owners/createOrUpdateOwnerForm.html` |\n| `POST` | `/owners/new` | `OwnerController` | `processCreationForm` | Redirect to `/owners/{id}` on success |\n| `GET` | `/owners/{ownerId}` | `OwnerController` | `showOwner` | Thymeleaf `owners/ownerDetails.html` |\n| `GET` | `/owners/{ownerId}/edit` | `OwnerController` | `initUpdateOwnerForm` | Thymeleaf `owners/createOrUpdateOwnerForm.html` |\n| `POST` | `/owners/{ownerId}/edit` | `OwnerController` | `processUpdateOwnerForm` | Redirect to `/owners/{ownerId}` on success |\n| `GET` | `/owners/{ownerId}/pets/new` | `PetController` | `initCreationForm` | Thymeleaf `pets/createOrUpdatePetForm.html` |\n| `POST` | `/owners/{ownerId}/pets/new` | `PetController` | `processCreationForm` | Redirect to `/owners/{ownerId}` on success |\n| `GET` | `/owners/{ownerId}/pets/{petId}/edit` | `PetController` | `initUpdateForm` | Thymeleaf `pets/createOrUpdatePetForm.html` |\n| `POST` | `/owners/{ownerId}/pets/{petId}/edit` | `PetController` | `processUpdateForm` | Redirect to `/owners/{ownerId}` on success |\n| `GET` | `/owners/{ownerId}/pets/{petId}/visits/new` | `VisitController` | `initNewVisitForm` | Thymeleaf `pets/createOrUpdateVisitForm.html` |\n| `POST` | `/owners/{ownerId}/pets/{petId}/visits/new` | `VisitController` | `processNewVisitForm` | Redirect to `/owners/{ownerId}` on success |\n| `GET` | `/vets.html` | `VetController` | `showVetList` | Thymeleaf `vets/vetList.html` |\n| `GET` | `/vets` | `VetController` | `showResourcesVetList` | JSON (`Vets` wrapper object) |\n| `GET` | `/oups` | `CrashController` | `triggerException` | Error page (throws `RuntimeException`) |",
+    "anchor": "route-table",
+    "sourceLink": "/reference/routes#route-table",
+    "tokens": 533
+  },
+  {
+    "id": "reference/routes.md#owners-pagination-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "Notes",
+      "`/owners` pagination"
+    ],
+    "text": "`GET /owners` accepts a `page` query parameter (1-indexed, default `1`). Page size is 5, hardcoded in `OwnerController.findPaginatedForOwnersLastName`. Filter by last-name prefix with the `lastName` form field.",
+    "anchor": "owners-pagination",
+    "sourceLink": "/reference/routes#owners-pagination",
+    "tokens": 53
+  },
+  {
+    "id": "reference/routes.md#vetshtml-pagination-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "Notes",
+      "`/vets.html` pagination"
+    ],
+    "text": "`GET /vets.html` accepts a `page` query parameter (1-indexed, default `1`). Page size is 5, hardcoded in `VetController.findPaginated`.",
+    "anchor": "vetshtml-pagination",
+    "sourceLink": "/reference/routes#vetshtml-pagination",
+    "tokens": 34
+  },
+  {
+    "id": "reference/routes.md#vets-vs-vetshtml-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "Notes",
+      "`/vets` vs `/vets.html`"
+    ],
+    "text": "Same controller, two mappings. `/vets.html` renders the Thymeleaf list view. `/vets` returns JSON — the handler is annotated `@ResponseBody` and returns a `Vets` object (a wrapper around `List<Vet>`) that Jackson serialises. The `/vets` JSON endpoint uses the cached `VetRepository.findAll()` (no pagination).",
+    "anchor": "vets-vs-vetshtml",
+    "sourceLink": "/reference/routes#vets-vs-vetshtml",
+    "tokens": 78
+  },
+  {
+    "id": "reference/routes.md#language-switching-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "Notes",
+      "Language switching"
+    ],
+    "text": "All `GET` routes accept a `?lang={code}` parameter. `LocaleChangeInterceptor` (registered in `WebConfiguration`) intercepts every request and updates the session locale if the parameter is present. Supported codes: `en`, `de`, `es`, `fa`, `hi`, `ja`, `ko`, `pt`, `ru`, `tr`.",
+    "anchor": "language-switching",
+    "sourceLink": "/reference/routes#language-switching",
+    "tokens": 69
+  },
+  {
+    "id": "reference/routes.md#oups-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "Notes",
+      "`/oups`"
+    ],
+    "text": "`CrashController.triggerException` throws `RuntimeException` unconditionally. The route exists to demonstrate Spring Boot's default error page (`src/main/resources/templates/error.html`).",
+    "anchor": "oups",
+    "sourceLink": "/reference/routes#oups",
+    "tokens": 47
+  },
+  {
+    "id": "reference/routes.md#see-also-0",
+    "file": "reference/routes.md",
+    "headings": [
+      "HTTP Routes",
+      "See also"
+    ],
+    "text": "- [Request Flow and Spring MVC Patterns](../concepts/request-flow) — how controllers process requests\n- [Domain Model](../concepts/domain-model) — entities behind these routes",
+    "anchor": "see-also",
+    "sourceLink": "/reference/routes#see-also",
+    "tokens": 44
+  },
+  {
+    "id": "tutorials/explore-the-app.md#explore-the-app-end-to-end-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End"
+    ],
+    "text": "Walk through every domain entity in Spring PetClinic: owners, pets, visits, and veterinarians. By the end you will have created a full record and understand how the entities relate.\n\n**Prerequisite:** the application is running at http://localhost:8080. See [Getting Started](../getting-started) if it isn't.",
+    "anchor": "explore-the-app-end-to-end",
+    "sourceLink": "/tutorials/explore-the-app",
+    "tokens": 77
+  },
+  {
+    "id": "tutorials/explore-the-app.md#step-1--find-an-existing-owner-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "Step 1 — Find an existing owner"
+    ],
+    "text": "Navigate to http://localhost:8080/owners/find.\n\nLeave the search field blank and click **Find Owner** to list all owners. Results are paginated 5 per page. You can filter by last name prefix — `Da` matches Davis, Daneau, etc.\n\nIf exactly one owner matches, the app redirects directly to that owner's detail page.",
+    "anchor": "step-1--find-an-existing-owner",
+    "sourceLink": "/tutorials/explore-the-app#step-1--find-an-existing-owner",
+    "tokens": 78
+  },
+  {
+    "id": "tutorials/explore-the-app.md#step-2--add-a-new-owner-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "Step 2 — Add a new owner"
+    ],
+    "text": "1. Go to http://localhost:8080/owners/new.\n2. Fill in all fields:\n   - **First name** and **Last name**: required.\n   - **Address** and **City**: required.\n   - **Telephone**: exactly 10 digits (validated by `@Pattern(regexp = \"\\\\d{10}\")` on the `Owner` entity).\n3. Click **Add Owner**.\n\nOn success, the app saves the owner and redirects to their detail page at `/owners/{id}`.",
+    "anchor": "step-2--add-a-new-owner",
+    "sourceLink": "/tutorials/explore-the-app#step-2--add-a-new-owner",
+    "tokens": 95
+  },
+  {
+    "id": "tutorials/explore-the-app.md#step-3--add-a-pet-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "Step 3 — Add a pet"
+    ],
+    "text": "From the owner detail page, click **Add New Pet**.\n\n1. Enter a **Name**. Pet names must be unique per owner — the database enforces a `UNIQUE (owner_id, name)` constraint (`unique_owner_pet_name` in `db/h2/schema.sql`).\n2. Enter a **Birth date**. Dates in the future are rejected.\n3. Select a **Type** from the dropdown (cat, dog, lizard, snake, bird, hamster, or rabbit). These come from the `types` table, pre-populated by `db/h2/data.sql`.\n4. Click **Add Pet**.",
+    "anchor": "step-3--add-a-pet",
+    "sourceLink": "/tutorials/explore-the-app#step-3--add-a-pet",
+    "tokens": 116
+  },
+  {
+    "id": "tutorials/explore-the-app.md#step-4--schedule-a-visit-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "Step 4 — Schedule a visit"
+    ],
+    "text": "From the owner detail page, find the pet you just added and click **Add Visit**.\n\n1. Enter a **Date**. The date must be tomorrow or later — the form enforces `minVisitDate = LocalDate.now().plusDays(1)` set by `VisitController.minVisitDate()`.\n2. Enter a **Description**.\n3. Click **Add Visit**.\n\nThe visit appears in the pet's visit history on the owner detail page.",
+    "anchor": "step-4--schedule-a-visit",
+    "sourceLink": "/tutorials/explore-the-app#step-4--schedule-a-visit",
+    "tokens": 92
+  },
+  {
+    "id": "tutorials/explore-the-app.md#step-5--view-veterinarians-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "Step 5 — View veterinarians"
+    ],
+    "text": "Navigate to http://localhost:8080/vets.html for the HTML view, or http://localhost:8080/vets for JSON.\n\nBoth endpoints use the same `VetController`. The HTML route (`/vets.html`) renders `vets/vetList.html` with pagination (5 per page). The JSON route (`/vets`) returns a `Vets` wrapper object and is cached via `@Cacheable(\"vets\")` on `VetRepository.findAll()`.",
+    "anchor": "step-5--view-veterinarians",
+    "sourceLink": "/tutorials/explore-the-app#step-5--view-veterinarians",
+    "tokens": 91
+  },
+  {
+    "id": "tutorials/explore-the-app.md#step-6--switch-the-ui-language-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "Step 6 — Switch the UI language"
+    ],
+    "text": "Append `?lang=de` to any URL to switch to German. Supported language codes:\n\n| Code | Language |\n|------|----------|\n| `en` | English (default) |\n| `de` | German |\n| `es` | Spanish |\n| `fa` | Persian |\n| `hi` | Hindi |\n| `ja` | Japanese |\n| `ko` | Korean |\n| `pt` | Portuguese |\n| `ru` | Russian |\n| `tr` | Turkish |\n\nThe language selection persists in the HTTP session via `SessionLocaleResolver` (configured in `WebConfiguration`). To revert: append `?lang=en`.",
+    "anchor": "step-6--switch-the-ui-language",
+    "sourceLink": "/tutorials/explore-the-app#step-6--switch-the-ui-language",
+    "tokens": 116
+  },
+  {
+    "id": "tutorials/explore-the-app.md#what-you-explored-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "What you explored"
+    ],
+    "text": "You created an Owner that owns a Pet that has a Visit. This mirrors the domain model:\n\n```mermaid\n%%{init: {'theme':'base','themeVariables':{'primaryColor':'#6ea6d6','primaryTextColor':'#1a1a1a','primaryBorderColor':'#4a86bb','lineColor':'#4a86bb','secondaryColor':'#e8f0fa','tertiaryColor':'#f5f8fd','background':'#ffffff','mainBkg':'#e8f0fa'}}}%%\nerDiagram\n    OWNER ||--o{ PET : \"owns\"\n    PET }o--|| TYPE : \"is of\"\n    PET ||--o{ VISIT : \"has\"\n    VET }o--o{ SPECIALTY : \"has\"\n```\n\nSee [Domain Model](../concepts/domain-model) for the full entity hierarchy and JPA mapping details.",
+    "anchor": "what-you-explored",
+    "sourceLink": "/tutorials/explore-the-app#what-you-explored",
+    "tokens": 147
+  },
+  {
+    "id": "tutorials/explore-the-app.md#see-also-0",
+    "file": "tutorials/explore-the-app.md",
+    "headings": [
+      "Explore the App End to End",
+      "See also"
+    ],
+    "text": "- [Domain Model](../concepts/domain-model) — entity relationships and JPA decisions\n- [Request Flow and Spring MVC Patterns](../concepts/request-flow) — what happens inside the app on each request\n- [HTTP Routes](../reference/routes) — full route table",
+    "anchor": "see-also",
+    "sourceLink": "/tutorials/explore-the-app#see-also",
+    "tokens": 63
+  }
+]

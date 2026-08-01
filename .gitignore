@@ -46,3 +46,30 @@ out/
 _site/
 *.css
 !petclinic.css
+!*.module.css
+!tome/site/src/css/*.css
+
+# BEGIN grimoire
+# Runtime state produced by Grimoire — commit .grimoire/seal.json so every
+# teammate / CI agrees on what's already documented, but keep progress
+# checkpoints and agent logs out of history.
+.grimoire/progress.json
+.grimoire/logs/
+.grimoire/cache/
+
+# Local SQLite doc index the docs MCP server queries — regenerated on
+# every cast/sync from chunks.json/vectors.bin, never hand-edited.
+.grimoire/index.sqlite
+.grimoire/index.sqlite-*
+
+# agent-install installs skill copies under each detected agent's
+# directory plus a universal `.agents/skills/` mirror. The trees are
+# regenerated on every cast — never hand-edit, never commit.
+.agents/skills/
+.claude/skills/
+.codex/skills/
+.opencode/skills/
+.copilot/skills/
+.github/copilot/skills/
+.cursor/skills/
+# END grimoire

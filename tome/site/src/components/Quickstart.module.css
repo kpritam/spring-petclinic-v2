@@ -1,0 +1,13 @@
+.li {
+  position: relative;
+}
+
+.li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 38px;
+  top: 100%;
+  width: 2px;
+  height: 1rem;
+  background: var(--petclinic-border-strong);
+}

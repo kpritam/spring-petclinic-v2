@@ -1,0 +1,39 @@
+@keyframes heroBlobDrift {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-70px) scale(1.08); }
+}
+
+.glowPrimary,
+.glowAccent {
+  animation: petclinic-glow-pulse 6s var(--petclinic-ease-out, ease-in-out) infinite;
+}
+
+.glowAccent {
+  animation-duration: 7s;
+  animation-delay: 1.5s;
+}
+
+/* Progressive enhancement: layer a scroll-linked drift on top of the
+   ambient pulse where the browser supports scroll-driven animations. */
+@supports (animation-timeline: scroll()) {
+  .glowPrimary {
+    animation: petclinic-glow-pulse 6s var(--petclinic-ease-out, ease-in-out) infinite,
+      heroBlobDrift linear;
+    animation-timeline: auto, scroll(root block);
+    animation-range: normal, 0 90vh;
+  }
+
+  .glowAccent {
+    animation: petclinic-glow-pulse 7s var(--petclinic-ease-out, ease-in-out) infinite 1.5s,
+      heroBlobDrift linear;
+    animation-timeline: auto, scroll(root block);
+    animation-range: normal, 0 90vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glowPrimary,
+  .glowAccent {
+    animation: none;
+  }
+}

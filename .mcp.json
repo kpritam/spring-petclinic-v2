@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "grimoire-docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@kpritam/grimoire-mcp"
+      ]
+    }
+  }
+}
