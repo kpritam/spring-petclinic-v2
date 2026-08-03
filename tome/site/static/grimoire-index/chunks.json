@@ -29,10 +29,10 @@
       "Domain Model",
       "Entity hierarchy"
     ],
-    "text": "```mermaid\n%%{init: {'theme':'base','themeVariables':{'primaryColor':'#6ea6d6','primaryTextColor':'#1a1a1a','primaryBorderColor':'#4a86bb','lineColor':'#4a86bb','secondaryColor':'#e8f0fa','tertiaryColor':'#f5f8fd','background':'#ffffff','mainBkg':'#e8f0fa'}}}%%\nclassDiagram\n    class BaseEntity {\n        +Integer id\n    }\n    class NamedEntity {\n        +String name\n    }\n    class Person {\n        +String firstName\n        +String lastName\n    }\n    class Owner {\n        +String address\n        +String city\n        +String telephone\n        +List~Pet~ pets\n    }\n    class Pet {\n        +String name\n        +LocalDate birthDate\n        +PetType type\n        +List~Visit~ visits\n    }\n    class Visit {\n        +LocalDate date\n        +String description\n    }\n    class Vet {\n        +Set~Specialty~ specialties\n    }\n    class PetType {\n        +String name\n    }\n    class Specialty {\n        +String name\n    }\n\n    BaseEntity <|-- NamedEntity\n    BaseEntity <|-- Person\n    NamedEntity <|-- PetType\n    NamedEntity <|-- Specialty\n    Person <|-- Owner\n    Person <|-- Vet\n    Owner \"1\" --> \"0..*\" Pet : owns\n    Pet \"1\" --> \"0..*\" Visit : has\n    Pet \"*\" --> \"1\" PetType : is of\n    Vet \"*\" --> \"*\" Specialty : has\n```",
+    "text": "```mermaid\nclassDiagram\n    class BaseEntity {\n        +Integer id\n    }\n    class NamedEntity {\n        +String name\n    }\n    class Person {\n        +String firstName\n        +String lastName\n    }\n    class Owner {\n        +String address\n        +String city\n        +String telephone\n        +List~Pet~ pets\n    }\n    class Pet {\n        +String name\n        +LocalDate birthDate\n        +PetType type\n        +List~Visit~ visits\n    }\n    class Visit {\n        +LocalDate date\n        +String description\n    }\n    class Vet {\n        +Set~Specialty~ specialties\n    }\n    class PetType {\n        +String name\n    }\n    class Specialty {\n        +String name\n    }\n\n    BaseEntity <|-- NamedEntity\n    BaseEntity <|-- Person\n    NamedEntity <|-- PetType\n    NamedEntity <|-- Specialty\n    Person <|-- Owner\n    Person <|-- Vet\n    Owner \"1\" --> \"0..*\" Pet : owns\n    Pet \"1\" --> \"0..*\" Visit : has\n    Pet \"*\" --> \"1\" PetType : is of\n    Vet \"*\" --> \"*\" Specialty : has\n```",
     "anchor": "entity-hierarchy",
     "sourceLink": "/concepts/domain-model#entity-hierarchy",
-    "tokens": 308
+    "tokens": 245
   },
   {
     "id": "concepts/domain-model.md#database-schema-0",
@@ -153,10 +153,10 @@
       "Request Flow and Spring MVC Patterns",
       "End-to-end request trace"
     ],
-    "text": "```mermaid\n%%{init: {'theme':'base','themeVariables':{'primaryColor':'#6ea6d6','primaryTextColor':'#1a1a1a','primaryBorderColor':'#4a86bb','lineColor':'#4a86bb','secondaryColor':'#e8f0fa','tertiaryColor':'#f5f8fd','background':'#ffffff','mainBkg':'#ffffff'}}}%%\nsequenceDiagram\n    participant Browser\n    participant DispatcherServlet\n    participant LocaleChangeInterceptor\n    participant PetController\n    participant OwnerRepository\n    participant Database\n    participant ThymeleafEngine\n\n    Browser->>DispatcherServlet: POST /owners/3/pets/new\n    DispatcherServlet->>LocaleChangeInterceptor: preHandle (check ?lang=)\n    LocaleChangeInterceptor-->>DispatcherServlet: ok\n    DispatcherServlet->>PetController: @ModelAttribute \"owner\" → findOwner(3)\n    PetController->>OwnerRepository: findById(3)\n    OwnerRepository->>Database: SELECT owner + pets (EAGER)\n    Database-->>OwnerRepository: Owner row + Pet rows\n    OwnerRepository-->>PetController: Owner\n    DispatcherServlet->>PetController: @ModelAttribute \"types\" → populatePetTypes()\n    PetController->>OwnerRepository: findPetTypes()\n    OwnerRepository->>Database: SELECT * FROM types\n    Database-->>OwnerRepository: PetType rows\n    OwnerRepository-->>PetController: Collection<PetType>\n    DispatcherServlet->>PetController: processCreationForm(owner, pet, result, ...)\n    PetController->>PetController: validate pet name uniqueness\n    PetController->>OwnerRepository: saveAndFlush(owner)\n    OwnerRepository->>Database: INSERT INTO pets\n    Database-->>OwnerRepository: ok\n    OwnerRepository-->>PetController: saved\n    PetController-->>DispatcherServlet: redirect:/owners/3\n    DispatcherServlet-->>Browser: HTTP 302 → /owners/3\n    Browser->>DispatcherServlet: GET /owners/3\n    DispatcherServlet->>PetController: showOwner(3) [OwnerController]\n    PetController->>OwnerRepository: findById(3)\n    OwnerRepository->>Database: SELECT owner + pets (EAGER)\n    Database-->>OwnerRepository: Owner + Pets + Visits\n    OwnerRepository-->>ThymeleafEngine: Owner model\n    ThymeleafEngine-->>Browser: ownerDetails.html\n```",
+    "text": "```mermaid\nsequenceDiagram\n    participant Browser\n    participant DispatcherServlet\n    participant LocaleChangeInterceptor\n    participant PetController\n    participant OwnerRepository\n    participant Database\n    participant ThymeleafEngine\n\n    Browser->>DispatcherServlet: POST /owners/3/pets/new\n    DispatcherServlet->>LocaleChangeInterceptor: preHandle (check ?lang=)\n    LocaleChangeInterceptor-->>DispatcherServlet: ok\n    DispatcherServlet->>PetController: @ModelAttribute \"owner\" → findOwner(3)\n    PetController->>OwnerRepository: findById(3)\n    OwnerRepository->>Database: SELECT owner + pets (EAGER)\n    Database-->>OwnerRepository: Owner row + Pet rows\n    OwnerRepository-->>PetController: Owner\n    DispatcherServlet->>PetController: @ModelAttribute \"types\" → populatePetTypes()\n    PetController->>OwnerRepository: findPetTypes()\n    OwnerRepository->>Database: SELECT * FROM types\n    Database-->>OwnerRepository: PetType rows\n    OwnerRepository-->>PetController: Collection<PetType>\n    DispatcherServlet->>PetController: processCreationForm(owner, pet, result, ...)\n    PetController->>PetController: validate pet name uniqueness\n    PetController->>OwnerRepository: saveAndFlush(owner)\n    OwnerRepository->>Database: INSERT INTO pets\n    Database-->>OwnerRepository: ok\n    OwnerRepository-->>PetController: saved\n    PetController-->>DispatcherServlet: redirect:/owners/3\n    DispatcherServlet-->>Browser: HTTP 302 → /owners/3\n    Browser->>DispatcherServlet: GET /owners/3\n    DispatcherServlet->>PetController: showOwner(3) [OwnerController]\n    PetController->>OwnerRepository: findById(3)\n    OwnerRepository->>Database: SELECT owner + pets (EAGER)\n    Database-->>OwnerRepository: Owner + Pets + Visits\n    OwnerRepository-->>ThymeleafEngine: Owner model\n    ThymeleafEngine-->>Browser: ownerDetails.html\n```",
     "anchor": "end-to-end-request-trace",
     "sourceLink": "/concepts/request-flow#end-to-end-request-trace",
-    "tokens": 523
+    "tokens": 460
   },
   {
     "id": "concepts/request-flow.md#modelattribute-pre-population-0",
@@ -691,55 +691,10 @@
     "id": "index.mdx#preamble-0",
     "file": "index.mdx",
     "headings": [],
-    "text": "import Head from '@docusaurus/Head';\nimport TerminalMockup from './site/src/components/TerminalMockup';\nimport FeatureGrid from './site/src/components/FeatureGrid';\nimport Quickstart from './site/src/components/Quickstart';\nimport NavCards from './site/src/components/NavCards';\n\n<Head>\n  <title>Spring PetClinic — Spring Boot demo app</title>\n  <meta name=\"description\" content=\"A fully-wired Spring Boot application demonstrating owners, pets, visits, and vet scheduling. Runs on H2, MySQL, or PostgreSQL. Container-ready.\" />\n</Head>\n\n<div style={{\n  width: '100vw',\n  maxWidth: '100vw',\n  marginInline: 'calc(50% - 50vw)',\n  overflow: 'hidden',\n}}>",
+    "text": "import Head from '@docusaurus/Head';\nimport Hero from './site/src/components/Hero';\nimport FeatureGrid from './site/src/components/FeatureGrid';\nimport Quickstart from './site/src/components/Quickstart';\nimport NavCards from './site/src/components/NavCards';\n\n<Head>\n  <title>Spring PetClinic — Spring Boot demo app</title>\n  <meta name=\"description\" content=\"A fully-wired Spring Boot application demonstrating owners, pets, visits, and vet scheduling. Runs on H2, MySQL, or PostgreSQL. Container-ready.\" />\n</Head>\n\n<div style={{\n  width: '100vw',\n  maxWidth: '100vw',\n  marginInline: 'calc(50% - 50vw)',\n  overflow: 'hidden',\n}}>\n\n<Hero />\n\n<FeatureGrid />\n\n<Quickstart />\n\n<NavCards />\n\n</div>",
     "anchor": "preamble",
     "sourceLink": "/",
-    "tokens": 163
-  },
-  {
-    "id": "index.mdx#preamble-1",
-    "file": "index.mdx",
-    "headings": [],
-    "text": "{/* ── Hero section ── */}\n<section style={{\n  position: 'relative',\n  overflow: 'hidden',\n  background: 'var(--petclinic-bg-gradient)',\n  width: '100%',\n  paddingTop: 'clamp(4rem, 8vw, 7rem)',\n  paddingBottom: 'clamp(3rem, 6vw, 5rem)',\n  paddingInline: 'clamp(1rem, 4vw, 4rem)',\n}}>\n  <div aria-hidden=\"true\" style={{\n    position: 'absolute', top: '-80px', left: '10%',\n    width: '500px', height: '500px', borderRadius: '50%', pointerEvents: 'none',\n    background: 'radial-gradient(circle, rgba(13,148,136,0.14) 0%, transparent 70%)',\n  }} />\n  <div aria-hidden=\"true\" style={{\n    position: 'absolute', top: '10%', right: '5%',\n    width: '380px', height: '380px', borderRadius: '50%', pointerEvents: 'none',\n    background: 'radial-gradient(circle, rgba(234,88,12,0.10) 0%, transparent 70%)',\n  }} />",
-    "anchor": "preamble",
-    "sourceLink": "/",
-    "tokens": 202
-  },
-  {
-    "id": "index.mdx#preamble-2",
-    "file": "index.mdx",
-    "headings": [],
-    "text": "<div style={{\n    position: 'relative',\n    maxWidth: 'var(--petclinic-content-max, 72rem)',\n    marginInline: 'auto',\n    display: 'grid',\n    gridTemplateColumns: 'repeat(auto-fit, minmax(min(28rem, 100%), 1fr))',\n    gap: 'clamp(2rem, 5vw, 4rem)',\n    alignItems: 'center',\n  }}>\n    <div style={{\n      display: 'flex', flexDirection: 'column', gap: '1.25rem',\n      animation: 'petclinic-fade-up 360ms var(--petclinic-ease-out, cubic-bezier(0.16,1,0.3,1)) both',\n    }}>\n      <span style={{\n        alignSelf: 'flex-start',\n        display: 'inline-flex',\n        padding: '4px 14px', borderRadius: '20px',\n        fontSize: '0.78rem', fontWeight: 600,\n        background: 'rgba(13,148,136,0.10)',\n        color: 'var(--petclinic-primary, #0D9488)',\n        border: '1px solid var(--petclinic-border-strong, #5EEAD4)',\n        letterSpacing: '0.02em',\n        fontFamily: 'var(--petclinic-font-mono, ui-monospace, monospace)',\n      }}>Spring Boot · Thymeleaf · JPA</span>",
-    "anchor": "preamble",
-    "sourceLink": "/",
-    "tokens": 245
-  },
-  {
-    "id": "index.mdx#preamble-3",
-    "file": "index.mdx",
-    "headings": [],
-    "text": "<h1 style={{\n        fontFamily: 'var(--petclinic-font-display, Fredoka, system-ui, sans-serif)',\n        fontSize: 'clamp(2rem, 5vw, 3.25rem)',\n        fontWeight: 700,\n        lineHeight: 1.15,\n        letterSpacing: '-0.02em',\n        color: 'var(--petclinic-content, #134E4A)',\n        margin: 0,\n      }}>\n        Build confidence before you ship to production\n      </h1>\n\n<p style={{\n        fontSize: 'clamp(1rem, 2vw, 1.125rem)',\n        lineHeight: 1.65,\n        color: 'var(--petclinic-muted, #2D7A74)',\n        margin: 0,\n        maxWidth: '52ch',\n      }}>\n        A fully-wired Spring Boot application you can run, break, and learn from.\n        Multi-database, multi-language, and ready for containers.\n      </p>",
-    "anchor": "preamble",
-    "sourceLink": "/",
-    "tokens": 182
-  },
-  {
-    "id": "index.mdx#preamble-4",
-    "file": "index.mdx",
-    "headings": [],
-    "text": "<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>\n        <a href=\"/getting-started\" style={{\n          display: 'inline-flex', alignItems: 'center',\n          padding: '0.7rem 1.5rem', borderRadius: '8px',\n          background: 'var(--petclinic-accent, #EA580C)', color: '#fff',\n          fontFamily: 'var(--petclinic-font-display, Fredoka, system-ui, sans-serif)',\n          fontWeight: 600, fontSize: '1rem',\n          textDecoration: 'none', cursor: 'pointer',\n          boxShadow: '0 2px 8px rgba(234,88,12,0.25)',\n        }}>\n          Get started\n        </a>\n        <a href=\"/tutorials/explore-the-app\" style={{\n          display: 'inline-flex', alignItems: 'center',\n          padding: '0.65rem 1.25rem', borderRadius: '8px',\n          border: '1.5px solid var(--petclinic-border-strong, #5EEAD4)',\n          color: 'var(--petclinic-content, #134E4A)',\n          fontFamily: 'var(--petclinic-font-display, Fredoka, system-ui, sans-serif)',\n          fontWeight: 600, fontSize: '1rem',\n          textDecoration: 'none', cursor: 'pointer',\n          background: 'transparent',\n        }}>\n          Explore the app →\n        </a>\n      </div>\n    </div>",
-    "anchor": "preamble",
-    "sourceLink": "/",
-    "tokens": 300
-  },
-  {
-    "id": "index.mdx#preamble-5",
-    "file": "index.mdx",
-    "headings": [],
-    "text": "<div style={{ animation: 'petclinic-fade-up 480ms 80ms var(--petclinic-ease-out, cubic-bezier(0.16,1,0.3,1)) both' }}>\n      <TerminalMockup />\n    </div>\n  </div>\n</section>\n\n<FeatureGrid />\n\n<Quickstart />\n\n<NavCards />\n\n</div>",
-    "anchor": "preamble",
-    "sourceLink": "/",
-    "tokens": 58
+    "tokens": 175
   },
   {
     "id": "reference/configuration.md#configuration-properties-0",
@@ -1026,10 +981,10 @@
       "Explore the App End to End",
       "What you explored"
     ],
-    "text": "You created an Owner that owns a Pet that has a Visit. This mirrors the domain model:\n\n```mermaid\n%%{init: {'theme':'base','themeVariables':{'primaryColor':'#6ea6d6','primaryTextColor':'#1a1a1a','primaryBorderColor':'#4a86bb','lineColor':'#4a86bb','secondaryColor':'#e8f0fa','tertiaryColor':'#f5f8fd','background':'#ffffff','mainBkg':'#e8f0fa'}}}%%\nerDiagram\n    OWNER ||--o{ PET : \"owns\"\n    PET }o--|| TYPE : \"is of\"\n    PET ||--o{ VISIT : \"has\"\n    VET }o--o{ SPECIALTY : \"has\"\n```\n\nSee [Domain Model](../concepts/domain-model) for the full entity hierarchy and JPA mapping details.",
+    "text": "You created an Owner that owns a Pet that has a Visit. This mirrors the domain model:\n\n```mermaid\nerDiagram\n    OWNER ||--o{ PET : \"owns\"\n    PET }o--|| TYPE : \"is of\"\n    PET ||--o{ VISIT : \"has\"\n    VET }o--o{ SPECIALTY : \"has\"\n```\n\nSee [Domain Model](../concepts/domain-model) for the full entity hierarchy and JPA mapping details.",
     "anchor": "what-you-explored",
     "sourceLink": "/tutorials/explore-the-app#what-you-explored",
-    "tokens": 147
+    "tokens": 84
   },
   {
     "id": "tutorials/explore-the-app.md#see-also-0",
